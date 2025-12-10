@@ -17,12 +17,24 @@ import seaborn as sns
 from io import BytesIO
 import base64
 import warnings
+from datetime import datetime
+from models import db, Flight, Prediction, User
+from config import config
 warnings.filterwarnings('ignore')
 
 app = Flask(__name__, 
           template_folder='templates', 
           static_folder='static')
-app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', False)
+
+# Load configuration
+app.config.from_object(config['development'])
+
+# Initialize database
+db.init_app(app)
+
+# Create tables
+with app.app_context():
+    db.create_all()
 
 # Attempt to load the model
 try:
@@ -67,6 +79,95 @@ def internal_error(error):
     return render_template("home.html", prediction_text="Internal server error. Please try again."), 500
 
 
+@app.route('/flights')
+@cross_origin()
+def list_flights():
+    """List all flights"""
+    try:
+        flights = Flight.query.all()
+        return render_template('flights.html', flights=[f.to_dict() for f in flights])
+    except Exception as e:
+        return render_template('flights.html', error=str(e))
+
+
+@app.route('/flights/add', methods=['GET', 'POST'])
+@cross_origin()
+def add_flight():
+    """Add a new flight"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            airline = request.form.get('airline')
+            source = request.form.get('source')
+            destination = request.form.get('destination')
+            departure_time = datetime.strptime(request.form.get('departure_time'), '%Y-%m-%dT%H:%M')
+            arrival_time = datetime.strptime(request.form.get('arrival_time'), '%Y-%m-%dT%H:%M')
+            total_stops = int(request.form.get('total_stops'))
+            price = float(request.form.get('price')) if request.form.get('price') else None
+            
+            # Create new flight
+            flight = Flight(
+                airline=airline,
+                source=source,
+                destination=destination,
+                departure_time=departure_time,
+                arrival_time=arrival_time,
+                total_stops=total_stops,
+                price=price
+            )
+            
+            # Add to database
+            db.session.add(flight)
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Flight added successfully!'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Error adding flight: {str(e)}'}), 400
+    
+    return render_template('add_flight.html')
+
+
+@app.route('/flights/edit/<int:id>', methods=['GET', 'POST'])
+@cross_origin()
+def edit_flight(id):
+    """Edit an existing flight"""
+    flight = Flight.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            # Update flight data
+            flight.airline = request.form.get('airline')
+            flight.source = request.form.get('source')
+            flight.destination = request.form.get('destination')
+            flight.departure_time = datetime.strptime(request.form.get('departure_time'), '%Y-%m-%dT%H:%M')
+            flight.arrival_time = datetime.strptime(request.form.get('arrival_time'), '%Y-%m-%dT%H:%M')
+            flight.total_stops = int(request.form.get('total_stops'))
+            flight.price = float(request.form.get('price')) if request.form.get('price') else None
+            
+            # Commit changes
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Flight updated successfully!'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Error updating flight: {str(e)}'}), 400
+    
+    return render_template('edit_flight.html', flight=flight.to_dict())
+
+
+@app.route('/flights/delete/<int:id>', methods=['POST'])
+@cross_origin()
+def delete_flight(id):
+    """Delete a flight"""
+    try:
+        flight = Flight.query.get_or_404(id)
+        db.session.delete(flight)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Flight deleted successfully!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error deleting flight: {str(e)}'}), 400
 
 
 @app.route("/predict", methods = ["GET", "POST"])
@@ -413,6 +514,37 @@ def predict():
             ]])
 
             output=round(prediction[0],2)
+            
+            # Save the prediction to database
+            try:
+                # Create a new flight record
+                dep_time = datetime.strptime(date_dep, "%Y-%m-%dT%H:%M")
+                arr_time = datetime.strptime(date_arr, "%Y-%m-%dT%H:%M")
+                
+                flight = Flight(
+                    airline=airline,
+                    source=Source,
+                    destination=Destination,
+                    departure_time=dep_time,
+                    arrival_time=arr_time,
+                    total_stops=Total_stops,
+                    price=output
+                )
+                
+                db.session.add(flight)
+                db.session.flush()  # Get the flight ID without committing
+                
+                # Create prediction record
+                prediction_record = Prediction(
+                    flight_id=flight.id,
+                    predicted_price=output
+                )
+                
+                db.session.add(prediction_record)
+                db.session.commit()
+            except Exception as db_error:
+                db.session.rollback()
+                print(f"Database error: {db_error}")
 
             return render_template('home.html',prediction_text="Your Flight price is Rs. {}".format(output))
         except Exception as e:

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Flight</title>
+    <!-- BootStrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- As a heading -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+            </div>
+        </div>
+    </nav>
+
+    <br><br><br>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Edit Flight</h1>
+        
+        <form id="flightForm">
+            <input type="hidden" id="flight_id" name="flight_id" value="{{ flight.id }}">
+            
+            <div class="form-group">
+                <label for="airline">Airline:</label>
+                <select class="form-control" id="airline" name="airline" required>
+                    <option value="">Select Airline</option>
+                    <option value="Jet Airways" {% if flight.airline == 'Jet Airways' %}selected{% endif %}>Jet Airways</option>
+                    <option value="IndiGo" {% if flight.airline == 'IndiGo' %}selected{% endif %}>IndiGo</option>
+                    <option value="Air India" {% if flight.airline == 'Air India' %}selected{% endif %}>Air India</option>
+                    <option value="Multiple carriers" {% if flight.airline == 'Multiple carriers' %}selected{% endif %}>Multiple carriers</option>
+                    <option value="SpiceJet" {% if flight.airline == 'SpiceJet' %}selected{% endif %}>SpiceJet</option>
+                    <option value="Vistara" {% if flight.airline == 'Vistara' %}selected{% endif %}>Vistara</option>
+                    <option value="Air Asia" {% if flight.airline == 'Air Asia' %}selected{% endif %}>Air Asia</option>
+                    <option value="GoAir" {% if flight.airline == 'GoAir' %}selected{% endif %}>GoAir</option>
+                    <option value="Multiple carriers Premium economy" {% if flight.airline == 'Multiple carriers Premium economy' %}selected{% endif %}>Multiple carriers Premium economy</option>
+                    <option value="Jet Airways Business" {% if flight.airline == 'Jet Airways Business' %}selected{% endif %}>Jet Airways Business</option>
+                    <option value="Vistara Premium economy" {% if flight.airline == 'Vistara Premium economy' %}selected{% endif %}>Vistara Premium economy</option>
+                    <option value="Trujet" {% if flight.airline == 'Trujet' %}selected{% endif %}>Trujet</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="source">Source:</label>
+                <select class="form-control" id="source" name="source" required>
+                    <option value="">Select Source</option>
+                    <option value="Delhi" {% if flight.source == 'Delhi' %}selected{% endif %}>Delhi</option>
+                    <option value="Kolkata" {% if flight.source == 'Kolkata' %}selected{% endif %}>Kolkata</option>
+                    <option value="Mumbai" {% if flight.source == 'Mumbai' %}selected{% endif %}>Mumbai</option>
+                    <option value="Chennai" {% if flight.source == 'Chennai' %}selected{% endif %}>Chennai</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="destination">Destination:</label>
+                <select class="form-control" id="destination" name="destination" required>
+                    <option value="">Select Destination</option>
+                    <option value="Cochin" {% if flight.destination == 'Cochin' %}selected{% endif %}>Cochin</option>
+                    <option value="Delhi" {% if flight.destination == 'Delhi' %}selected{% endif %}>Delhi</option>
+                    <option value="New Delhi" {% if flight.destination == 'New Delhi' %}selected{% endif %}>New Delhi</option>
+                    <option value="Hyderabad" {% if flight.destination == 'Hyderabad' %}selected{% endif %}>Hyderabad</option>
+                    <option value="Kolkata" {% if flight.destination == 'Kolkata' %}selected{% endif %}>Kolkata</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="departure_time">Departure Time:</label>
+                <input type="datetime-local" class="form-control" id="departure_time" name="departure_time" 
+                       value="{{ flight.departure_time.replace('T', ' ').split('.')[0] if flight.departure_time }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="arrival_time">Arrival Time:</label>
+                <input type="datetime-local" class="form-control" id="arrival_time" name="arrival_time" 
+                       value="{{ flight.arrival_time.replace('T', ' ').split('.')[0] if flight.arrival_time }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="total_stops">Total Stops:</label>
+                <select class="form-control" id="total_stops" name="total_stops" required>
+                    <option value="0" {% if flight.total_stops == 0 %}selected{% endif %}>Non-Stop</option>
+                    <option value="1" {% if flight.total_stops == 1 %}selected{% endif %}>1 Stop</option>
+                    <option value="2" {% if flight.total_stops == 2 %}selected{% endif %}>2 Stops</option>
+                    <option value="3" {% if flight.total_stops == 3 %}selected{% endif %}>3 Stops</option>
+                    <option value="4" {% if flight.total_stops >= 4 %}selected{% endif %}>4+ Stops</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="price">Price (Rs.):</label>
+                <input type="number" class="form-control" id="price" name="price" step="0.01" value="{{ flight.price or '' }}">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Update Flight</button>
+            <a href="/flights" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    
+    <script>
+        $('#flightForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: '/flights/edit/{{ flight.id }}',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        window.location.href = '/flights';
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while updating the flight.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

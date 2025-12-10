@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Management</title>
+    <!-- BootStrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .action-buttons a {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- As a heading -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+            </div>
+        </div>
+    </nav>
+
+    <br><br><br>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Flight Management</h1>
+        
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Error Occurred</h4>
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+        
+        <div class="row mb-3">
+            <div class="col-12 text-right">
+                <a href="/flights/add" class="btn btn-primary">Add New Flight</a>
+                <a href="/" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+        
+        {% if flights %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Airline</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Departure Time</th>
+                        <th>Arrival Time</th>
+                        <th>Stops</th>
+                        <th>Price (Rs.)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flight in flights %}
+                    <tr>
+                        <td>{{ flight.id }}</td>
+                        <td>{{ flight.airline }}</td>
+                        <td>{{ flight.source }}</td>
+                        <td>{{ flight.destination }}</td>
+                        <td>{{ flight.departure_time }}</td>
+                        <td>{{ flight.arrival_time }}</td>
+                        <td>{{ flight.total_stops }}</td>
+                        <td>{{ flight.price }}</td>
+                        <td class="action-buttons">
+                            <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">Edit</a>
+                            <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">No Flights Found</h4>
+            <p>There are no flights in the database yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    
+    <script>
+        function deleteFlight(flightId) {
+            if (confirm("Are you sure you want to delete this flight?")) {
+                $.ajax({
+                    url: '/flights/delete/' + flightId,
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while deleting the flight.');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
