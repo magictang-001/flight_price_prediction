@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Price Prediction</title>
+    <title>✈️ Flight Price Prediction</title>
 
 
     <!-- BootStrap -->
@@ -13,17 +13,20 @@
 
     <!-- css -->
     <link rel="stylesheet" href="static/css/styles.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 
 </head>
 
-<body background = "https://jooinn.com/images/jet-in-flight-4.jpg" >
+<body>
 
     <!-- As a heading -->
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
             </div>
         </div>
     </nav>
@@ -32,47 +35,46 @@
 
 
     <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="float-animation" style="color: #ff6b6b; font-weight: bold;">✈️ Predict Your Flight Fare ✈️</h1>
+                <p style="font-size: 1.2rem; color: #555;">Enter your flight details below to get an instant price prediction!</p>
+            </div>
+        </div>
 
-
+        <br>
 
         <form action="\predict" method="post">
-
-
             <div class="row">
-                <div class="col-sm-6">
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Departure Date</h5>
+                            <h5 class="card-title">🛫 Departure Date & Time</h5>
                             <!-- Departure -->
-                            <input type="datetime-local" name="Dep_Time" id="Dep_Time" required="required">
+                            <input type="datetime-local" name="Dep_Time" id="Dep_Time" class="form-control" required="required">
                         </div>
                     </div>
                 </div>
-                <br>
-                <br>
-                <br>
-                <div class="col-sm-6">
+                
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Arrival Date</h5>
+                            <h5 class="card-title">🛬 Arrival Date & Time</h5>
                             <!-- Arrival -->
-                            <input type="datetime-local" name="Arrival_Time" id="Arrival_Time" required="required">
+                            <input type="datetime-local" name="Arrival_Time" id="Arrival_Time" class="form-control" required="required">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <br>
-            <br>
-            <br>
-
             <div class="row">
-                <div class="col-sm-6">
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
                             <!-- Source -->
-                            <h5 class="card-title">Source</h5>
-                            <select name="Source" id="Source" required="required">
+                            <h5 class="card-title">🏙️ Source City</h5>
+                            <select name="Source" id="Source" class="form-control" required="required">
+                                <option value="">Select Source City</option>
                                 <option value="Delhi">Delhi</option>
                                 <option value="Kolkata">Kolkata</option>
                                 <option value="Mumbai">Mumbai</option>
@@ -81,12 +83,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
+                
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Destination</h5>
+                            <h5 class="card-title">🌆 Destination City</h5>
                             <!-- Destination -->
-                            <select name="Destination" id="Destination" required="required">
+                            <select name="Destination" id="Destination" class="form-control" required="required">
+                                <option value="">Select Destination City</option>
                                 <option value="Cochin">Cochin</option>
                                 <option value="Delhi">Delhi</option>
                                 <option value="New Delhi">New Delhi</option>
@@ -98,34 +102,31 @@
                 </div>
             </div>
 
-
-
-            <br>
-            <br>
-            <br>
-
             <div class="row">
-                <div class="col-sm-6">
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Stopage</h5>
+                            <h5 class="card-title">🧳 Number of Stops</h5>
                             <!-- Total Stops -->
-                            <select name="stops" required="required">
-                                <option value="0">Non-Stop</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
+                            <select name="stops" class="form-control" required="required">
+                                <option value="">Select Number of Stops</option>
+                                <option value="0">Non-Stop ✈️</option>
+                                <option value="1">1 Stop 🛄</option>
+                                <option value="2">2 Stops 🛄</option>
+                                <option value="3">3 Stops 🛄</option>
+                                <option value="4">4+ Stops 🧳</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
+                
+                <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Which Airline you want to travel?</h5>
+                            <h5 class="card-title">🛩️ Which Airline?</h5>
                             <!-- Airline -->
-                            <select name="airline" id="airline" required="required">
+                            <select name="airline" id="airline" class="form-control" required="required">
+                                <option value="">Select Airline</option>
                                 <option value="Jet Airways">Jet Airways</option>
                                 <option value="IndiGo">IndiGo</option>
                                 <option value="Air India">Air India</option>
@@ -134,8 +135,7 @@
                                 <option value="Vistara">Vistara</option>
                                 <option value="Air Asia">Air Asia</option>
                                 <option value="GoAir">GoAir</option>
-                                <option value="Multiple carriers Premium economy">Multiple carriers Premium economy
-                                </option>
+                                <option value="Multiple carriers Premium economy">Multiple carriers Premium economy</option>
                                 <option value="Jet Airways Business">Jet Airways Business</option>
                                 <option value="Vistara Premium economy">Vistara Premium economy</option>
                                 <option value="Trujet">Trujet</option>
@@ -145,35 +145,63 @@
                 </div>
             </div>
 
-
-
             <br>
-            <br>
-            <br>
+            
             <!-- Submit -->
-            <input type="submit" value="Submit" class="btn btn-secondary">
+            <div class="row">
+                <div class="col-12">
+                    <input type="submit" value="🔮 Predict Flight Price" class="btn btn-secondary btn-lg">
+                </div>
+            </div>
         </form>
 
         <br>
-        <br>
-        <h3>{{ prediction_text }}</h3>
+        
+        <div class="row">
+            <div class="col-12">
+                <h3>{{ prediction_text }}</h3>
+            </div>
+        </div>
 
-        <br>
-        <br>
+        <br><br>
         
         <div class="row">
             <div class="col-12 text-center">
-                <a href="/analysis" class="btn btn-info">View Data Analysis</a>
-                <a href="/flights" class="btn btn-success">Manage Flights</a>
+                <a href="/analysis" class="btn btn-info btn-lg">📊 View Data Analysis</a>
+                <a href="/flights" class="btn btn-success btn-lg">📋 Manage Flights</a>
             </div>
         </div>
-        <br>
-        <br>
-
+        
+        <br><br>
+        
+        <div class="row">
+            <div class="col-12">
+                <div style="background: rgba(255, 255, 255, 0.7); border-radius: 15px; padding: 20px;">
+                    <h3>💡 How It Works</h3>
+                    <p>Our machine learning model analyzes thousands of flight records to predict the best price for your journey!</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div style="font-size: 2rem;">✈️</div>
+                            <h5>Enter Details</h5>
+                            <p>Provide your flight information</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="font-size: 2rem;">🔮</div>
+                            <h5>Predict</h5>
+                            <p>Our AI calculates the fare</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="font-size: 2rem;">💰</div>
+                            <h5>Save Money</h5>
+                            <p>Book at the right time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <br><br>
     </div>
-
-
-
 
     <!-- JavaScript -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"

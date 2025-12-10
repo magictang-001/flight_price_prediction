@@ -1,16 +1,208 @@
+/* 全局样式 */
 body {
-    background-color: #e1f4f3;
+    background: linear-gradient(135deg, #e1f4f3, #f0f8ff);
+    font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', 'Segoe UI', sans-serif;
     text-align: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    color: #333;
 }
 
+/* 导航栏样式 */
 .navbar {
-    background-color: #333333;
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 0 0 20px 20px;
+    padding: 15px 0;
 }
 
-a {
-    color: #f1f9f9;
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.8rem;
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
 }
 
-a:hover {
-    color: #f0f0f0;
-  }
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+/* 容器样式 */
+.container {
+    max-width: 1200px;
+    padding: 20px;
+}
+
+/* 卡片样式 */
+.card {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-title {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+/* 表单控件样式 */
+.form-control, .form-control:focus {
+    border-radius: 15px;
+    border: 2px solid #e0e0e0;
+    padding: 12px 15px;
+}
+
+.form-control:focus {
+    border-color: #ff9a9e;
+    box-shadow: 0 0 0 0.2rem rgba(255, 154, 158, 0.25);
+}
+
+/* 下拉菜单样式 */
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 50px;
+    padding: 10px 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-secondary {
+    background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+    color: #333;
+}
+
+.btn-info {
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(to right, #84fab0, #8fd3f4);
+    color: white;
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #d4fc79, #96e6a1);
+    color: #333;
+}
+
+.btn-warning {
+    background: linear-gradient(to right, #ffe259, #ffa751);
+    color: #333;
+}
+
+.btn-danger {
+    background: linear-gradient(to right, #ff9a9e, #fbc2eb);
+    color: white;
+}
+
+/* 预测结果显示 */
+h3 {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 15px;
+    border-radius: 15px;
+    display: inline-block;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 链接按钮样式 */
+a.btn {
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .navbar-brand {
+        font-size: 1.5rem;
+    }
+    
+    .btn {
+        margin: 5px;
+        padding: 8px 20px;
+    }
+}
+
+/* 表格样式 */
+.table {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.table th {
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    color: white;
+}
+
+/* 分析页面图表容器 */
+.chart-container {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.chart-container h3 {
+    background: none;
+    box-shadow: none;
+    padding: 0;
+    color: #ff6b6b;
+}
+
+/* 加载动画 */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}

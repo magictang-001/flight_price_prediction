@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Price Analysis</title>
+    <title>📊 Flight Price Analysis</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -12,10 +12,20 @@
     <style>
         .chart-container {
             margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .chart-img {
             max-width: 100%;
             height: auto;
+            border-radius: 15px;
+        }
+        .page-header {
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 30px;
         }
     </style>
 </head>
@@ -24,7 +34,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
             </div>
         </div>
     </nav>
@@ -32,42 +42,42 @@
     <br><br><br>
 
     <div class="container">
-        <h1 class="text-center mb-5">Flight Price Analysis Dashboard</h1>
+        <h1 class="page-header float-animation">📊 Flight Price Analysis Dashboard</h1>
         
         {% if error %}
             <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">Error Occurred</h4>
+                <h4 class="alert-heading">❌ Error Occurred</h4>
                 <p>{{ error }}</p>
             </div>
         {% else %}
             <div class="row">
                 <div class="col-12 chart-container">
-                    <h3>Average Flight Prices by Airline</h3>
+                    <h3>🛩️ Average Flight Prices by Airline</h3>
                     <img src="data:image/png;base64,{{ plots.airline_prices }}" class="chart-img" alt="Airline Prices">
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-12 chart-container">
-                    <h3>Average Flight Prices by Month</h3>
+                    <h3>📅 Average Flight Prices by Month</h3>
                     <img src="data:image/png;base64,{{ plots.monthly_prices }}" class="chart-img" alt="Monthly Prices">
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-12 chart-container">
-                    <h3>Average Prices by Source and Destination</h3>
+                    <h3>🌎 Average Prices by Source and Destination</h3>
                     <img src="data:image/png;base64,{{ plots.source_dest_prices }}" class="chart-img" alt="Source-Destination Prices">
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-md-6 chart-container">
-                    <h3>Average Flight Prices by Number of Stops</h3>
+                    <h3>🧳 Average Flight Prices by Number of Stops</h3>
                     <img src="data:image/png;base64,{{ plots.stops_prices }}" class="chart-img" alt="Stops Prices">
                 </div>
                 <div class="col-md-6 chart-container">
-                    <h3>Distribution of Flight Prices</h3>
+                    <h3>💰 Distribution of Flight Prices</h3>
                     <img src="data:image/png;base64,{{ plots.price_distribution }}" class="chart-img" alt="Price Distribution">
                 </div>
             </div>
@@ -75,8 +85,8 @@
         
         <div class="row mt-5">
             <div class="col-12 text-center">
-                <a href="/model_analysis" class="btn btn-success">Model Analysis</a>
-                <a href="/" class="btn btn-primary">Back to Prediction</a>
+                <a href="/model_analysis" class="btn btn-success btn-lg">🧠 Model Analysis</a>
+                <a href="/" class="btn btn-primary btn-lg">🏠 Back to Prediction</a>
             </div>
         </div>
     </div>

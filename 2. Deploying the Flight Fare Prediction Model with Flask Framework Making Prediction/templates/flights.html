@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Management</title>
+    <title>✈️ Flight Management</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -12,6 +12,13 @@
     <style>
         .action-buttons a {
             margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .page-header {
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 30px;
         }
     </style>
 </head>
@@ -20,7 +27,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
             </div>
         </div>
     </nav>
@@ -28,19 +35,19 @@
     <br><br><br>
 
     <div class="container">
-        <h1 class="text-center mb-4">Flight Management</h1>
+        <h1 class="page-header float-animation">📋 Flight Management</h1>
         
         {% if error %}
             <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">Error Occurred</h4>
+                <h4 class="alert-heading">❌ Error Occurred</h4>
                 <p>{{ error }}</p>
             </div>
         {% endif %}
         
-        <div class="row mb-3">
-            <div class="col-12 text-right">
-                <a href="/flights/add" class="btn btn-primary">Add New Flight</a>
-                <a href="/" class="btn btn-secondary">Back to Home</a>
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="/flights/add" class="btn btn-primary btn-lg">➕ Add New Flight</a>
+                <a href="/" class="btn btn-secondary btn-lg">🏠 Back to Home</a>
             </div>
         </div>
         
@@ -50,14 +57,14 @@
                 <thead class="thead-dark">
                     <tr>
                         <th>ID</th>
-                        <th>Airline</th>
-                        <th>Source</th>
-                        <th>Destination</th>
-                        <th>Departure Time</th>
-                        <th>Arrival Time</th>
-                        <th>Stops</th>
-                        <th>Price (Rs.)</th>
-                        <th>Actions</th>
+                        <th>🛩️ Airline</th>
+                        <th>🏙️ Source</th>
+                        <th>🌆 Destination</th>
+                        <th>🛫 Departure</th>
+                        <th>🛬 Arrival</th>
+                        <th>🧳 Stops</th>
+                        <th>💰 Price (Rs.)</th>
+                        <th>⚙️ Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,8 +79,8 @@
                         <td>{{ flight.total_stops }}</td>
                         <td>{{ flight.price }}</td>
                         <td class="action-buttons">
-                            <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">Edit</a>
-                            <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">Delete</button>
+                            <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">✏️ Edit</a>
+                            <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">🗑️ Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -82,8 +89,10 @@
         </div>
         {% else %}
         <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading">No Flights Found</h4>
+            <h4 class="alert-heading">📭 No Flights Found</h4>
             <p>There are no flights in the database yet.</p>
+            <hr>
+            <p class="mb-0">Click "Add New Flight" to add your first flight record!</p>
         </div>
         {% endif %}
     </div>
