@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session, redirect, url_for, flash
 try:
     from flask_cors import cross_origin
 except ImportError:
@@ -20,6 +20,7 @@ import warnings
 from datetime import datetime
 from models import db, Flight, Prediction, User
 from config import config
+from werkzeug.security import generate_password_hash, check_password_hash
 warnings.filterwarnings('ignore')
 
 app = Flask(__name__, 
@@ -35,6 +36,35 @@ db.init_app(app)
 # Create tables
 with app.app_context():
     db.create_all()
+
+# 设置密钥
+app.secret_key = 'your-secret-key-here'
+
+# 登录验证装饰器
+def login_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('You need to login first', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
+# 管理员权限装饰器
+def admin_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('You need to login first', 'error')
+            return redirect(url_for('login'))
+        
+        user = User.query.get(session['user_id'])
+        if not user or not user.is_admin():
+            flash('Access denied. Administrator privileges required.', 'error')
+            return redirect(url_for('list_flights'))
+            
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
 # Attempt to load the model
 try:
@@ -69,6 +99,79 @@ def home():
     return render_template("home.html")
 
 
+@app.route('/login', methods=['GET', 'POST'])
+@cross_origin()
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        # 查找用户
+        user = User.query.filter_by(username=username).first()
+        
+        # 验证用户和密码
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
+            flash('Login successful!', 'success')
+            return redirect(url_for('list_flights'))
+        else:
+            flash('Invalid username or password', 'error')
+    
+    return render_template('login.html')
+
+
+@app.route('/logout')
+@cross_origin()
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    session.pop('role', None)
+    flash('You have been logged out', 'info')
+    return redirect(url_for('home'))
+
+
+@app.route('/register', methods=['GET', 'POST'])
+@cross_origin()
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        # 检查密码是否匹配
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('register.html')
+        
+        # 检查用户名是否已存在
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists', 'error')
+            return render_template('register.html')
+        
+        # 检查邮箱是否已存在
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'error')
+            return render_template('register.html')
+        
+        # 创建新用户（默认为普通用户）
+        hashed_password = generate_password_hash(password)
+        new_user = User(username=username, email=email, password_hash=hashed_password, role='user')
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Registration failed. Please try again.', 'error')
+    
+    return render_template('register.html')
+
+
 @app.errorhandler(404)
 def not_found(error):
     return render_template("home.html", prediction_text="Page not found."), 404
@@ -80,17 +183,28 @@ def internal_error(error):
 
 
 @app.route('/flights')
+@login_required
 @cross_origin()
 def list_flights():
-    """List all flights"""
+    """List flights - admins see all flights, users see only their own"""
     try:
-        flights = Flight.query.all()
-        return render_template('flights.html', flights=[f.to_dict() for f in flights])
+        # 检查用户角色
+        user = User.query.get(session['user_id'])
+        
+        if user.is_admin():
+            # 管理员可以看到所有航班
+            flights = Flight.query.all()
+        else:
+            # 普通用户只能看到自己的航班
+            flights = Flight.query.filter_by(user_id=session['user_id']).all()
+            
+        return render_template('flights.html', flights=[f.to_dict() for f in flights], user=user)
     except Exception as e:
         return render_template('flights.html', error=str(e))
 
 
 @app.route('/flights/add', methods=['GET', 'POST'])
+@login_required
 @cross_origin()
 def add_flight():
     """Add a new flight"""
@@ -113,7 +227,8 @@ def add_flight():
                 departure_time=departure_time,
                 arrival_time=arrival_time,
                 total_stops=total_stops,
-                price=price
+                price=price,
+                user_id=session['user_id']  # 关联到当前用户
             )
             
             # Add to database
@@ -129,10 +244,18 @@ def add_flight():
 
 
 @app.route('/flights/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 @cross_origin()
 def edit_flight(id):
     """Edit an existing flight"""
+    # 获取航班信息
     flight = Flight.query.get_or_404(id)
+    
+    # 检查权限：管理员可以编辑任何航班，普通用户只能编辑自己的航班
+    user = User.query.get(session['user_id'])
+    if not user.is_admin() and flight.user_id != session['user_id']:
+        flash('Access denied. You can only edit your own flights.', 'error')
+        return redirect(url_for('list_flights'))
     
     if request.method == 'POST':
         try:
@@ -157,17 +280,39 @@ def edit_flight(id):
 
 
 @app.route('/flights/delete/<int:id>', methods=['POST'])
+@login_required
 @cross_origin()
 def delete_flight(id):
     """Delete a flight"""
+    # 获取航班信息
+    flight = Flight.query.get_or_404(id)
+    
+    # 检查权限：管理员可以删除任何航班，普通用户只能删除自己的航班
+    user = User.query.get(session['user_id'])
+    if not user.is_admin() and flight.user_id != session['user_id']:
+        return jsonify({'success': False, 'message': 'Access denied. You can only delete your own flights.'}), 403
+    
     try:
-        flight = Flight.query.get_or_404(id)
         db.session.delete(flight)
         db.session.commit()
         return jsonify({'success': True, 'message': 'Flight deleted successfully!'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error deleting flight: {str(e)}'}), 400
+
+
+@app.route('/admin/users')
+@admin_required
+@cross_origin()
+def admin_users():
+    """Admin user management page"""
+    try:
+        # 只有管理员可以访问此页面
+        current_user = User.query.get(session['user_id'])
+        users = User.query.all()
+        return render_template('admin_users.html', users=users, current_user=current_user)
+    except Exception as e:
+        return render_template('admin_users.html', error=str(e))
 
 
 @app.route("/predict", methods = ["GET", "POST"])
@@ -521,6 +666,9 @@ def predict():
                 dep_time = datetime.strptime(date_dep, "%Y-%m-%dT%H:%M")
                 arr_time = datetime.strptime(date_arr, "%Y-%m-%dT%H:%M")
                 
+                # 如果用户已登录，则关联到用户
+                user_id = session.get('user_id') if 'user_id' in session else None
+                
                 flight = Flight(
                     airline=airline,
                     source=Source,
@@ -528,7 +676,8 @@ def predict():
                     departure_time=dep_time,
                     arrival_time=arr_time,
                     total_stops=Total_stops,
-                    price=output
+                    price=output,
+                    user_id=user_id
                 )
                 
                 db.session.add(flight)

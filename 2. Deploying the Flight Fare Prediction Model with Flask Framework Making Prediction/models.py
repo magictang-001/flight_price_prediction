@@ -17,6 +17,9 @@ class Flight(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # 添加用户外键
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
     # Relationship with predictions
     predictions = db.relationship('Prediction', backref='flight', lazy=True, cascade='all, delete-orphan')
     
@@ -66,6 +69,11 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # 添加角色字段，默认为'user'
+    role = db.Column(db.String(20), default='user', nullable=False)
+    
+    # 添加用户与航班的关系
+    flights = db.relationship('Flight', backref='user', lazy=True)
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -75,5 +83,10 @@ class User(db.Model):
             'id': self.id,
             'username': self.username,
             'email': self.email,
+            'role': self.role,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+    
+    # 检查用户是否为管理员
+    def is_admin(self):
+        return self.role == 'admin'

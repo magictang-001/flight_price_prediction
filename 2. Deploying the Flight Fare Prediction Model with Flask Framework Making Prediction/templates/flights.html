@@ -20,6 +20,14 @@
             text-align: center;
             margin-bottom: 30px;
         }
+        
+        .user-info {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -29,6 +37,10 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
             </div>
+            <div class="navbar-right" style="float: right;">
+                <span class="navbar-text" style="color: white;">Hello, {{ session.username }}!</span>
+                <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">Logout</a>
+            </div>
         </div>
     </nav>
 
@@ -36,6 +48,24 @@
 
     <div class="container">
         <h1 class="page-header float-animation">📋 Flight Management</h1>
+        
+        <div class="user-info">
+            <h4>User Information</h4>
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>Role:</strong> 
+                {% if user.is_admin() %}
+                    <span class="badge badge-danger">Administrator</span>
+                {% else %}
+                    <span class="badge badge-primary">User</span>
+                {% endif %}
+            </p>
+            {% if user.is_admin() %}
+                <p><em>As an administrator, you can view and manage all flights in the system.</em></p>
+                <p><a href="/admin/users" class="btn btn-warning btn-sm">👥 Manage Users</a></p>
+            {% else %}
+                <p><em>As a user, you can only view and manage flights that you have created.</em></p>
+            {% endif %}
+        </div>
         
         {% if error %}
             <div class="alert alert-danger" role="alert">
@@ -64,6 +94,9 @@
                         <th>🛬 Arrival</th>
                         <th>🧳 Stops</th>
                         <th>💰 Price (Rs.)</th>
+                        {% if user.is_admin() %}
+                            <th>👤 Owner</th>
+                        {% endif %}
                         <th>⚙️ Actions</th>
                     </tr>
                 </thead>
@@ -78,6 +111,15 @@
                         <td>{{ flight.arrival_time }}</td>
                         <td>{{ flight.total_stops }}</td>
                         <td>{{ flight.price }}</td>
+                        {% if user.is_admin() %}
+                            <td>
+                                {% if flight.user %}
+                                    {{ flight.user.username }}
+                                {% else %}
+                                    <em>System</em>
+                                {% endif %}
+                            </td>
+                        {% endif %}
                         <td class="action-buttons">
                             <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">✏️ Edit</a>
                             <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">🗑️ Delete</button>
@@ -90,7 +132,11 @@
         {% else %}
         <div class="alert alert-info" role="alert">
             <h4 class="alert-heading">📭 No Flights Found</h4>
-            <p>There are no flights in the database yet.</p>
+            {% if user.is_admin() %}
+                <p>There are no flights in the database.</p>
+            {% else %}
+                <p>You haven't created any flights yet.</p>
+            {% endif %}
             <hr>
             <p class="mb-0">Click "Add New Flight" to add your first flight record!</p>
         </div>
@@ -120,8 +166,12 @@
                             alert('Error: ' + response.message);
                         }
                     },
-                    error: function() {
-                        alert('An error occurred while deleting the flight.');
+                    error: function(xhr) {
+                        if (xhr.status === 403) {
+                            alert('Access denied. ' + xhr.responseJSON.message);
+                        } else {
+                            alert('An error occurred while deleting the flight.');
+                        }
                     }
                 });
             }
