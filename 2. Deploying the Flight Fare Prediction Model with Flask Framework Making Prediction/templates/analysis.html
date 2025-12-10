@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Price Analysis</title>
+    <!-- BootStrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .chart-container {
+            margin-bottom: 30px;
+        }
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- As a heading -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+            </div>
+        </div>
+    </nav>
+
+    <br><br><br>
+
+    <div class="container">
+        <h1 class="text-center mb-5">Flight Price Analysis Dashboard</h1>
+        
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Error Occurred</h4>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-12 chart-container">
+                    <h3>Average Flight Prices by Airline</h3>
+                    <img src="data:image/png;base64,{{ plots.airline_prices }}" class="chart-img" alt="Airline Prices">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12 chart-container">
+                    <h3>Average Flight Prices by Month</h3>
+                    <img src="data:image/png;base64,{{ plots.monthly_prices }}" class="chart-img" alt="Monthly Prices">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12 chart-container">
+                    <h3>Average Prices by Source and Destination</h3>
+                    <img src="data:image/png;base64,{{ plots.source_dest_prices }}" class="chart-img" alt="Source-Destination Prices">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 chart-container">
+                    <h3>Average Flight Prices by Number of Stops</h3>
+                    <img src="data:image/png;base64,{{ plots.stops_prices }}" class="chart-img" alt="Stops Prices">
+                </div>
+                <div class="col-md-6 chart-container">
+                    <h3>Distribution of Flight Prices</h3>
+                    <img src="data:image/png;base64,{{ plots.price_distribution }}" class="chart-img" alt="Price Distribution">
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="/model_analysis" class="btn btn-success">Model Analysis</a>
+                <a href="/" class="btn btn-primary">Back to Prediction</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+</body>
+</html>

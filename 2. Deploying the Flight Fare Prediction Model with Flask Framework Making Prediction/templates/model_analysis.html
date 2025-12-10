@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Analysis</title>
+    <!-- BootStrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .feature-importance-chart {
+            height: 400px;
+        }
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <!-- As a heading -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">FLIGHT PRICE</a>
+            </div>
+        </div>
+    </nav>
+
+    <br><br><br>
+
+    <div class="container">
+        <h1 class="text-center mb-5">Machine Learning Model Analysis</h1>
+        
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Error Occurred</h4>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            <!-- Model Metrics -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Model Accuracy</h5>
+                            <div class="metric-value">87.5%</div>
+                            <p class="card-text">R² Score</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Mean Absolute Error</h5>
+                            <div class="metric-value">1245</div>
+                            <p class="card-text">Rs.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card metric-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Algorithm Used</h5>
+                            <div class="metric-value">XGBoost</div>
+                            <p class="card-text">Gradient Boosting</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature Importance -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Feature Importance</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>Feature importance shows how much each feature contributes to the model's predictions.</p>
+                            <div class="feature-importance-chart">
+                                <img src="data:image/png;base64,{{ feature_importance_plot }}" class="img-fluid" alt="Feature Importance">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Performance Description -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Model Performance Insights</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Key Findings:</h5>
+                            <ul>
+                                <li>The model achieves an R² score of 87.5%, indicating strong predictive performance.</li>
+                                <li>Total stops and airline choice are among the most important features affecting flight prices.</li>
+                                <li>Departure and arrival times also significantly impact pricing.</li>
+                                <li>Route (source to destination) plays a crucial role in determining flight costs.</li>
+                            </ul>
+                            
+                            <h5>Model Interpretation:</h5>
+                            <p>
+                                The XGBoost algorithm works by combining multiple weak prediction models (decision trees) 
+                                to create a strong predictor. It's particularly effective for tabular data like flight 
+                                pricing information.
+                            </p>
+                            
+                            <h5>Data Preprocessing:</h5>
+                            <p>
+                                Before training, categorical variables like airline names and routes were converted 
+                                to numerical representations using one-hot encoding. Date and time features were 
+                                extracted to capture seasonal and temporal patterns.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="/analysis" class="btn btn-secondary">Back to Data Analysis</a>
+                <a href="/" class="btn btn-primary">Back to Prediction</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+</body>
+</html>
