@@ -40,6 +40,9 @@ with app.app_context():
 # 设置密钥
 app.secret_key = 'your-secret-key-here'
 
+# 添加语言状态管理
+app.config['DEFAULT_LANGUAGE'] = 'zh'  # 默认语言为中文
+
 # 登录验证装饰器
 def login_required(f):
     def decorated_function(*args, **kwargs):
@@ -61,7 +64,7 @@ def admin_required(f):
         if not user or not user.is_admin():
             flash('Access denied. Administrator privileges required.', 'error')
             return redirect(url_for('list_flights'))
-            
+        
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function

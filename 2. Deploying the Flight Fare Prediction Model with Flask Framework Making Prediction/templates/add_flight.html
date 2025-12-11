@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>➕ Add Flight</title>
+    <title>➕ 添加航班</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -15,11 +15,11 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
+                <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
             <div class="navbar-right" style="float: right;">
-                <span class="navbar-text" style="color: white;">Hello, {{ session.username }}!</span>
-                <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">Logout</a>
+                <span class="navbar-text" style="color: white;">您好, {{ session.username }}!</span>
+                <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">登出</a>
             </div>
         </div>
     </nav>
@@ -27,7 +27,7 @@
     <br><br><br>
 
     <div class="container">
-        <h1 class="text-center mb-4 float-animation" style="color: #ff6b6b;">➕ Add New Flight</h1>
+        <h1 class="text-center mb-4 float-animation" style="color: #ff6b6b;">➕ 添加新航班</h1>
         
         <div class="row justify-content-center">
             <div class="col-md-8">
@@ -35,9 +35,9 @@
                     <div class="card-body">
                         <form id="flightForm">
                             <div class="form-group">
-                                <label for="airline">🛩️ Airline:</label>
+                                <label for="airline">🛩️ 航空公司:</label>
                                 <select class="form-control" id="airline" name="airline" required>
-                                    <option value="">Select Airline</option>
+                                    <option value="">选择航空公司</option>
                                     <option value="Jet Airways">Jet Airways</option>
                                     <option value="IndiGo">IndiGo</option>
                                     <option value="Air India">Air India</option>
@@ -54,9 +54,9 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="source">🏙️ Source:</label>
+                                <label for="source">🏙️ 出发地:</label>
                                 <select class="form-control" id="source" name="source" required>
-                                    <option value="">Select Source</option>
+                                    <option value="">选择出发地</option>
                                     <option value="Delhi">Delhi</option>
                                     <option value="Kolkata">Kolkata</option>
                                     <option value="Mumbai">Mumbai</option>
@@ -65,9 +65,9 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="destination">🌆 Destination:</label>
+                                <label for="destination">🌆 目的地:</label>
                                 <select class="form-control" id="destination" name="destination" required>
-                                    <option value="">Select Destination</option>
+                                    <option value="">选择目的地</option>
                                     <option value="Cochin">Cochin</option>
                                     <option value="Delhi">Delhi</option>
                                     <option value="New Delhi">New Delhi</option>
@@ -77,34 +77,34 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="departure_time">🛫 Departure Time:</label>
+                                <label for="departure_time">🛫 出发时间:</label>
                                 <input type="datetime-local" class="form-control" id="departure_time" name="departure_time" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="arrival_time">🛬 Arrival Time:</label>
+                                <label for="arrival_time">🛬 到达时间:</label>
                                 <input type="datetime-local" class="form-control" id="arrival_time" name="arrival_time" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="total_stops">🧳 Total Stops:</label>
+                                <label for="total_stops">🧳 经停次数:</label>
                                 <select class="form-control" id="total_stops" name="total_stops" required>
-                                    <option value="">Select Number of Stops</option>
-                                    <option value="0">Non-Stop</option>
-                                    <option value="1">1 Stop</option>
-                                    <option value="2">2 Stops</option>
-                                    <option value="3">3 Stops</option>
-                                    <option value="4">4+ Stops</option>
+                                    <option value="">选择经停次数</option>
+                                    <option value="0">直飞</option>
+                                    <option value="1">1次经停</option>
+                                    <option value="2">2次经停</option>
+                                    <option value="3">3次经停</option>
+                                    <option value="4">4次及以上经停</option>
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label for="price">💰 Price (Rs.):</label>
-                                <input type="number" class="form-control" id="price" name="price" step="0.01" placeholder="Optional">
+                                <label for="price">💰 价格 (卢比):</label>
+                                <input type="number" class="form-control" id="price" name="price" step="0.01" placeholder="可选">
                             </div>
                             
-                            <button type="submit" class="btn btn-primary btn-lg btn-block">➕ Add Flight</button>
-                            <a href="/flights" class="btn btn-secondary btn-lg btn-block">↩️ Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">➕ 添加航班</button>
+                            <a href="/flights" class="btn btn-secondary btn-lg btn-block">↩️ 取消</a>
                         </form>
                     </div>
                 </div>
@@ -134,11 +134,11 @@
                         alert(response.message);
                         window.location.href = '/flights';
                     } else {
-                        alert('Error: ' + response.message);
+                        alert('错误: ' + response.message);
                     }
                 },
                 error: function() {
-                    alert('An error occurred while adding the flight.');
+                    alert('添加航班时发生错误。');
                 }
             });
         });

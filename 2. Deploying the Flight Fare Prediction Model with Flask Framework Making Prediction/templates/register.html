@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📝 Register - Flight Price Predictor</title>
+    <title>📝 注册 - 航班价格预测</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -15,7 +15,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
+                <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
         </div>
     </nav>
@@ -27,7 +27,7 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h1 class="text-center mb-4 float-animation" style="color: #ff6b6b;">📝 User Registration</h1>
+                        <h1 class="text-center mb-4 float-animation" style="color: #ff6b6b;">📝 用户注册</h1>
                         
                         {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
@@ -41,31 +41,31 @@
                         
                         <form method="POST">
                             <div class="form-group">
-                                <label for="username">👤 Username:</label>
+                                <label for="username">👤 用户名:</label>
                                 <input type="text" class="form-control" id="username" name="username" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="email">📧 Email:</label>
+                                <label for="email">📧 邮箱:</label>
                                 <input type="email" class="form-control" id="email" name="email" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="password">🔒 Password:</label>
+                                <label for="password">🔒 密码:</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="confirm_password">🔒 Confirm Password:</label>
+                                <label for="confirm_password">🔒 确认密码:</label>
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary btn-lg btn-block">✅ Register</button>
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">✅ 注册</button>
                         </form>
                         
                         <div class="text-center mt-3">
-                            <p>Already have an account? <a href="/login">Login here</a></p>
-                            <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+                            <p>已有账户？<a href="/login">在此登录</a></p>
+                            <a href="/" class="btn btn-secondary">🏠 返回首页</a>
                         </div>
                     </div>
                 </div>

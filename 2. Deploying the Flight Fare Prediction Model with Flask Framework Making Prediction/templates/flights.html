@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✈️ Flight Management</title>
+    <title>✈️ 航班管理</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -35,11 +35,11 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
+                <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
             <div class="navbar-right" style="float: right;">
-                <span class="navbar-text" style="color: white;">Hello, {{ session.username }}!</span>
-                <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">Logout</a>
+                <span class="navbar-text" style="color: white;">您好, {{ session.username }}!</span>
+                <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">登出</a>
             </div>
         </div>
     </nav>
@@ -47,37 +47,37 @@
     <br><br><br>
 
     <div class="container">
-        <h1 class="page-header float-animation">📋 Flight Management</h1>
+        <h1 class="page-header float-animation">📋 航班管理</h1>
         
         <div class="user-info">
-            <h4>User Information</h4>
-            <p><strong>Username:</strong> {{ user.username }}</p>
-            <p><strong>Role:</strong> 
+            <h4>用户信息</h4>
+            <p><strong>用户名:</strong> {{ user.username }}</p>
+            <p><strong>角色:</strong> 
                 {% if user.is_admin() %}
-                    <span class="badge badge-danger">Administrator</span>
+                    <span class="badge badge-danger">管理员</span>
                 {% else %}
-                    <span class="badge badge-primary">User</span>
+                    <span class="badge badge-primary">用户</span>
                 {% endif %}
             </p>
             {% if user.is_admin() %}
-                <p><em>As an administrator, you can view and manage all flights in the system.</em></p>
-                <p><a href="/admin/users" class="btn btn-warning btn-sm">👥 Manage Users</a></p>
+                <p><em>作为管理员，您可以查看和管理系统的全部航班。</em></p>
+                <p><a href="/admin/users" class="btn btn-warning btn-sm">👥 管理用户</a></p>
             {% else %}
-                <p><em>As a user, you can only view and manage flights that you have created.</em></p>
+                <p><em>作为用户，您只能查看和管理自己创建的航班。</em></p>
             {% endif %}
         </div>
         
         {% if error %}
             <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">❌ Error Occurred</h4>
+                <h4 class="alert-heading">❌ 发生错误</h4>
                 <p>{{ error }}</p>
             </div>
         {% endif %}
         
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <a href="/flights/add" class="btn btn-primary btn-lg">➕ Add New Flight</a>
-                <a href="/" class="btn btn-secondary btn-lg">🏠 Back to Home</a>
+                <a href="/flights/add" class="btn btn-primary btn-lg">➕ 添加新航班</a>
+                <a href="/" class="btn btn-secondary btn-lg">🏠 返回首页</a>
             </div>
         </div>
         
@@ -87,17 +87,17 @@
                 <thead class="thead-dark">
                     <tr>
                         <th>ID</th>
-                        <th>🛩️ Airline</th>
-                        <th>🏙️ Source</th>
-                        <th>🌆 Destination</th>
-                        <th>🛫 Departure</th>
-                        <th>🛬 Arrival</th>
-                        <th>🧳 Stops</th>
-                        <th>💰 Price (Rs.)</th>
+                        <th>🛩️ 航空公司</th>
+                        <th>🏙️ 出发地</th>
+                        <th>🌆 目的地</th>
+                        <th>🛫 出发时间</th>
+                        <th>🛬 到达时间</th>
+                        <th>🧳 经停次数</th>
+                        <th>💰 价格 (卢比)</th>
                         {% if user.is_admin() %}
-                            <th>👤 Owner</th>
+                            <th>👤 所有者</th>
                         {% endif %}
-                        <th>⚙️ Actions</th>
+                        <th>⚙️ 操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -116,13 +116,13 @@
                                 {% if flight.user %}
                                     {{ flight.user.username }}
                                 {% else %}
-                                    <em>System</em>
+                                    <em>系统</em>
                                 {% endif %}
                             </td>
                         {% endif %}
                         <td class="action-buttons">
-                            <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">✏️ Edit</a>
-                            <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">🗑️ Delete</button>
+                            <a href="/flights/edit/{{ flight.id }}" class="btn btn-warning btn-sm">✏️ 编辑</a>
+                            <button class="btn btn-danger btn-sm" onclick="deleteFlight({{ flight.id }})">🗑️ 删除</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -131,14 +131,14 @@
         </div>
         {% else %}
         <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading">📭 No Flights Found</h4>
+            <h4 class="alert-heading">📭 未找到航班</h4>
             {% if user.is_admin() %}
-                <p>There are no flights in the database.</p>
+                <p>数据库中没有航班记录。</p>
             {% else %}
-                <p>You haven't created any flights yet.</p>
+                <p>您尚未创建任何航班。</p>
             {% endif %}
             <hr>
-            <p class="mb-0">Click "Add New Flight" to add your first flight record!</p>
+            <p class="mb-0">点击 "添加新航班" 来添加您的第一条航班记录！</p>
         </div>
         {% endif %}
     </div>
@@ -154,7 +154,7 @@
     
     <script>
         function deleteFlight(flightId) {
-            if (confirm("Are you sure you want to delete this flight?")) {
+            if (confirm("您确定要删除这个航班吗？")) {
                 $.ajax({
                     url: '/flights/delete/' + flightId,
                     type: 'POST',
@@ -163,14 +163,14 @@
                             alert(response.message);
                             location.reload();
                         } else {
-                            alert('Error: ' + response.message);
+                            alert('错误: ' + response.message);
                         }
                     },
                     error: function(xhr) {
                         if (xhr.status === 403) {
-                            alert('Access denied. ' + xhr.responseJSON.message);
+                            alert('访问被拒绝。' + xhr.responseJSON.message);
                         } else {
-                            alert('An error occurred while deleting the flight.');
+                            alert('删除航班时发生错误。');
                         }
                     }
                 });

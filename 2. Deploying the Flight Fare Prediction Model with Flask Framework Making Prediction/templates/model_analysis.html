@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Model Analysis</title>
+    <title>🧠 模型分析</title>
     <!-- BootStrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -12,6 +12,8 @@
     <style>
         .feature-importance-chart {
             height: 400px;
+            max-width: 100%;
+            overflow: hidden;
         }
         .metric-card {
             text-align: center;
@@ -31,6 +33,20 @@
             text-align: center;
             margin-bottom: 30px;
         }
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -38,7 +54,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
+                <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
         </div>
     </nav>
@@ -46,11 +62,11 @@
     <br><br><br>
 
     <div class="container">
-        <h1 class="page-header float-animation">🧠 Machine Learning Model Analysis</h1>
+        <h1 class="page-header float-animation">🧠 机器学习模型分析</h1>
         
         {% if error %}
             <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">❌ Error Occurred</h4>
+                <h4 class="alert-heading">❌ 发生错误</h4>
                 <p>{{ error }}</p>
             </div>
         {% else %}
@@ -59,27 +75,27 @@
                 <div class="col-md-4">
                     <div class="card metric-card">
                         <div class="card-body">
-                            <h5 class="card-title">🎯 Model Accuracy</h5>
+                            <h5 class="card-title">🎯 模型准确率</h5>
                             <div class="metric-value">87.5%</div>
-                            <p class="card-text">R² Score</p>
+                            <p class="card-text">R² 分数</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card metric-card">
                         <div class="card-body">
-                            <h5 class="card-title">📏 Mean Absolute Error</h5>
+                            <h5 class="card-title">📏 平均绝对误差</h5>
                             <div class="metric-value">1245</div>
-                            <p class="card-text">Rs.</p>
+                            <p class="card-text">卢比</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card metric-card">
                         <div class="card-body">
-                            <h5 class="card-title">⚙️ Algorithm Used</h5>
+                            <h5 class="card-title">⚙️ 使用算法</h5>
                             <div class="metric-value">XGBoost</div>
-                            <p class="card-text">Gradient Boosting</p>
+                            <p class="card-text">梯度提升</p>
                         </div>
                     </div>
                 </div>
@@ -90,12 +106,14 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h3>⭐ Feature Importance</h3>
+                            <h3>⭐ 特征重要性</h3>
                         </div>
                         <div class="card-body">
-                            <p>Feature importance shows how much each feature contributes to the model's predictions.</p>
+                            <p>特征重要性显示了每个特征对模型预测的贡献程度。</p>
                             <div class="feature-importance-chart">
-                                <img src="data:image/png;base64,{{ feature_importance_plot }}" class="img-fluid" alt="Feature Importance">
+                                <div class="chart-container">
+                                    <img src="data:image/png;base64,{{ feature_importance_plot }}" class="chart-image" alt="特征重要性">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -103,33 +121,31 @@
             </div>
             
             <!-- Model Performance Description -->
-            <div class="row mt-4">
+            <div class="row mt-5">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h3>💡 Model Performance Insights</h3>
+                            <h3>💡 模型性能洞察</h3>
                         </div>
                         <div class="card-body">
-                            <h5>🔑 Key Findings:</h5>
+                            <h5>🔑 关键发现:</h5>
                             <ul>
-                                <li>The model achieves an R² score of 87.5%, indicating strong predictive performance.</li>
-                                <li>Total stops and airline choice are among the most important features affecting flight prices.</li>
-                                <li>Departure and arrival times also significantly impact pricing.</li>
-                                <li>Route (source to destination) plays a crucial role in determining flight costs.</li>
+                                <li>该模型达到了87.5%的R²分数，表明具有强大的预测性能。</li>
+                                <li>总经停次数和航空公司选择是影响航班价格的最重要特征。</li>
+                                <li>出发和到达时间也对价格产生显著影响。</li>
+                                <li>航线（出发地到目的地）在决定航班费用方面起着关键作用。</li>
                             </ul>
                             
-                            <h5>🤖 Model Interpretation:</h5>
+                            <h5>🤖 模型解释:</h5>
                             <p>
-                                The XGBoost algorithm works by combining multiple weak prediction models (decision trees) 
-                                to create a strong predictor. It's particularly effective for tabular data like flight 
-                                pricing information.
+                                XGBoost算法通过组合多个弱预测模型（决策树）
+                                来创建一个强预测器。对于航班定价信息这样的表格数据特别有效。
                             </p>
                             
-                            <h5>🔧 Data Preprocessing:</h5>
+                            <h5>🔧 数据预处理:</h5>
                             <p>
-                                Before training, categorical variables like airline names and routes were converted 
-                                to numerical representations using one-hot encoding. Date and time features were 
-                                extracted to capture seasonal and temporal patterns.
+                                在训练之前，航空公司名称和航线等分类变量通过独热编码转换
+                                为数值表示。提取了日期和时间特征以捕捉季节性和时间模式。
                             </p>
                         </div>
                     </div>
@@ -139,8 +155,8 @@
         
         <div class="row mt-5">
             <div class="col-12 text-center">
-                <a href="/analysis" class="btn btn-secondary btn-lg">📊 Back to Data Analysis</a>
-                <a href="/" class="btn btn-primary btn-lg">🏠 Back to Prediction</a>
+                <a href="/analysis" class="btn btn-secondary btn-lg">📊 返回数据分析</a>
+                <a href="/" class="btn btn-primary btn-lg">🏠 返回预测</a>
             </div>
         </div>
     </div>

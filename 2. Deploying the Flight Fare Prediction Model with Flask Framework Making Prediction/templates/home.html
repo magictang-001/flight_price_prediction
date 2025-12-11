@@ -81,7 +81,7 @@
                         <div class="card-body">
                             <!-- Source -->
                             <h5 class="card-title">🏙️ Source City</h5>
-                            <select name="Source" id="Source" class="form-control" required="required">
+                            <select name="Source" id="Source" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Source City</option>
                                 <option value="Delhi">Delhi</option>
                                 <option value="Kolkata">Kolkata</option>
@@ -97,7 +97,7 @@
                         <div class="card-body">
                             <h5 class="card-title">🌆 Destination City</h5>
                             <!-- Destination -->
-                            <select name="Destination" id="Destination" class="form-control" required="required">
+                            <select name="Destination" id="Destination" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Destination City</option>
                                 <option value="Cochin">Cochin</option>
                                 <option value="Delhi">Delhi</option>
@@ -116,7 +116,7 @@
                         <div class="card-body">
                             <h5 class="card-title">🧳 Number of Stops</h5>
                             <!-- Total Stops -->
-                            <select name="stops" class="form-control" required="required">
+                            <select name="stops" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Number of Stops</option>
                                 <option value="0">Non-Stop ✈️</option>
                                 <option value="1">1 Stop 🛄</option>
@@ -133,7 +133,7 @@
                         <div class="card-body">
                             <h5 class="card-title">🛩️ Which Airline?</h5>
                             <!-- Airline -->
-                            <select name="airline" id="airline" class="form-control" required="required">
+                            <select name="airline" id="airline" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Airline</option>
                                 <option value="Jet Airways">Jet Airways</option>
                                 <option value="IndiGo">IndiGo</option>
@@ -189,23 +189,23 @@
         <div class="row">
             <div class="col-12">
                 <div style="background: rgba(255, 255, 255, 0.7); border-radius: 15px; padding: 20px;">
-                    <h3>💡 How It Works</h3>
-                    <p>Our machine learning model analyzes thousands of flight records to predict the best price for your journey!</p>
+                    <h3>💡 工作原理</h3>
+                    <p>我们的机器学习模型分析数千条航班记录，以预测您旅程的最佳价格！</p>
                     <div class="row">
                         <div class="col-md-4">
                             <div style="font-size: 2rem;">✈️</div>
-                            <h5>Enter Details</h5>
-                            <p>Provide your flight information</p>
+                            <h5>输入详情</h5>
+                            <p>提供您的航班信息</p>
                         </div>
                         <div class="col-md-4">
                             <div style="font-size: 2rem;">🔮</div>
-                            <h5>Predict</h5>
-                            <p>Our AI calculates the fare</p>
+                            <h5>预测</h5>
+                            <p>我们的AI计算票价</p>
                         </div>
                         <div class="col-md-4">
                             <div style="font-size: 2rem;">💰</div>
-                            <h5>Save Money</h5>
-                            <p>Book at the right time</p>
+                            <h5>节省金钱</h5>
+                            <p>在合适的时间预订</p>
                         </div>
                     </div>
                 </div>
@@ -226,6 +226,97 @@
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
         crossorigin="anonymous"></script>
 
+    <!-- 语言切换脚本 -->
+    <script>
+        // 默认语言设置为中文
+        let currentLanguage = 'zh';
+        
+        // 定义中英文文本映射
+        const translations = {
+            'zh': {
+                'Predict Your Flight Fare': '预测您的航班票价',
+                'Enter your flight details below to get an instant price prediction!': '输入您的航班详情以获取即时价格预测！',
+                'Departure Date & Time': '出发日期和时间',
+                'Arrival Date & Time': '到达日期和时间',
+                'Source City': '出发城市',
+                'Destination City': '目的地城市',
+                'Number of Stops': '经停次数',
+                'Which Airline?': '航空公司？',
+                'Predict Flight Price': '预测航班价格',
+                'View Data Analysis': '查看数据分析',
+                'Manage Flights': '管理航班',
+                'Login to Manage Flights': '登录以管理航班',
+                'How It Works': '工作原理',
+                'Enter Details': '输入详情',
+                'Predict': '预测',
+                'Save Money': '节省金钱'
+            },
+            'en': {
+                'Predict Your Flight Fare': 'Predict Your Flight Fare',
+                'Enter your flight details below to get an instant price prediction!': 'Enter your flight details below to get an instant price prediction!',
+                'Departure Date & Time': 'Departure Date & Time',
+                'Arrival Date & Time': 'Arrival Date & Time',
+                'Source City': 'Source City',
+                'Destination City': 'Destination City',
+                'Number of Stops': 'Number of Stops',
+                'Which Airline?': 'Which Airline?',
+                'Predict Flight Price': 'Predict Flight Price',
+                'View Data Analysis': 'View Data Analysis',
+                'Manage Flights': 'Manage Flights',
+                'Login to Manage Flights': 'Login to Manage Flights',
+                'How It Works': 'How It Works',
+                'Enter Details': 'Enter Details',
+                'Predict': 'Predict',
+                'Save Money': 'Save Money'
+            }
+        };
+        
+        // 语言切换函数
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // 更新页面上的文本
+            document.querySelector('h1.float-animation').textContent = translations[lang]['Predict Your Flight Fare'];
+            document.querySelector('p').textContent = translations[lang]['Enter your flight details below to get an instant price prediction!'];
+            
+            // 更新表单标签
+            document.querySelectorAll('.card-title')[0].textContent = translations[lang]['Departure Date & Time'];
+            document.querySelectorAll('.card-title')[1].textContent = translations[lang]['Arrival Date & Time'];
+            document.querySelectorAll('.card-title')[2].textContent = translations[lang]['Source City'];
+            document.querySelectorAll('.card-title')[3].textContent = translations[lang]['Destination City'];
+            document.querySelectorAll('.card-title')[4].textContent = translations[lang]['Number of Stops'];
+            document.querySelectorAll('.card-title')[5].textContent = translations[lang]['Which Airline?'];
+            
+            // 更新按钮文本
+            document.querySelector('input[type="submit"]').value = translations[lang]['Predict Flight Price'];
+            document.querySelector('a.btn-info').textContent = translations[lang]['View Data Analysis'];
+            document.querySelector('a.btn-success').textContent = translations[lang]['Manage Flights'];
+            
+            // 更新其他链接文本
+            if (document.querySelector('a.btn-success') && document.querySelector('a.btn-success').textContent === 'Login to Manage Flights') {
+                document.querySelector('a.btn-success').textContent = translations[lang]['Login to Manage Flights'];
+            }
+            
+            // 更新工作原理部分
+            document.querySelector('.chart-container h3').textContent = translations[lang]['How It Works'];
+            document.querySelectorAll('.col-md-4 h5')[0].textContent = translations[lang]['Enter Details'];
+            document.querySelectorAll('.col-md-4 h5')[1].textContent = translations[lang]['Predict'];
+            document.querySelectorAll('.col-md-4 h5')[2].textContent = translations[lang]['Save Money'];
+            
+            // 更新语言切换按钮文本
+            document.getElementById('language-label').textContent = lang === 'zh' ? '中文' : 'English';
+        }
+        
+        // 初始化：设置默认语言为中文
+        window.onload = function() {
+            switchLanguage('zh');
+        };
+        
+        // 添加点击事件监听器
+        document.getElementById('language-toggle').addEventListener('click', function() {
+            switchLanguage(currentLanguage === 'zh' ? 'en' : 'zh');
+        });
+    </script>
 </body>
 
 </html>

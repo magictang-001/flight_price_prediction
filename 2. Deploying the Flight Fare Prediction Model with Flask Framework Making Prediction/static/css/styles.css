@@ -76,6 +76,14 @@ select.form-control {
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 1em;
+    padding-right: 30px; /* 为下拉箭头留出空间 */
+}
+
+/* 优化下拉菜单选项显示 */
+select.form-control option {
+    padding: 10px;
+    background-color: #fff;
+    color: #333;
 }
 
 /* 按钮样式 */
@@ -159,6 +167,10 @@ a.btn {
     .btn {
         margin: 5px;
         padding: 8px 20px;
+    }
+    
+    select.form-control {
+        padding: 10px 30px 10px 12px; /* 在移动端增加内边距 */
     }
 }
 
