@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苍穹外卖 - 系统架构与功能交互概览 (AI Powered)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        /* Chart Container Styling - Mandatory Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-item.active {
+            background-color: #0ea5e9; /* Sky-500 */
+            color: white;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e5e7eb;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #0ea5e9;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Chosen Palette: Sky Blue & Fresh Orange (Professional, Clean, Food-Industry related) -->
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-cloud text-sky-500 text-2xl mr-3"></i>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">苍穹外卖 <span class="text-xs font-normal text-slate-500 ml-2">System Explorer + AI ✨</span></span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="switchView('dashboard')" class="nav-item active px-3 py-2 rounded-md text-sm font-medium transition-colors">总览</button>
+                    <button onclick="switchView('features')" class="nav-item px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-sky-500 transition-colors">功能模块</button>
+                    <button onclick="switchView('technical')" class="nav-item px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-sky-500 transition-colors">技术亮点</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+
+        <!-- View: Dashboard -->
+        <div id="dashboard-view" class="space-y-8 animate-fade-in">
+            <!-- Hero Section -->
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-extrabold text-slate-800 mb-4">项目功能架构解析</h1>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+                    基于 Spring Boot 开发的全功能外卖点餐系统后端。
+                    <br>
+                    核心服务于 <span class="font-bold text-sky-600">商家管理端</span> 与 <span class="font-bold text-orange-500">顾客小程序端</span>。
+                </p>
+            </div>
+
+            <!-- Top Stats/Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-sky-500">
+                    <div class="text-slate-500 text-sm font-semibold uppercase">核心框架</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1">Spring Boot</div>
+                    <div class="text-xs text-slate-400 mt-2">Spring MVC + MyBatis</div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-indigo-500">
+                    <div class="text-slate-500 text-sm font-semibold uppercase">数据库</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1">MySQL + Redis</div>
+                    <div class="text-xs text-slate-400 mt-2">持久化与缓存支持</div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-orange-500">
+                    <div class="text-slate-500 text-sm font-semibold uppercase">交互技术</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1">WebSocket</div>
+                    <div class="text-xs text-slate-400 mt-2">实时接单与催单提醒</div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-purple-500">
+                    <div class="text-slate-500 text-sm font-semibold uppercase">AI 增强</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1">Gemini API</div>
+                    <div class="text-xs text-slate-400 mt-2">智能分析与推荐</div>
+                </div>
+            </div>
+
+            <!-- Visualization Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Tech Stack Chart -->
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-layer-group mr-2 text-sky-500"></i> 技术栈构成
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="techStackChart"></canvas>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-4 text-center">
+                        系统采用分层架构，集成了多种中间件以支持高并发与实时性。
+                    </p>
+                </div>
+
+                <!-- Roles Interaction Flow -->
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-users-gear mr-2 text-orange-500"></i> 双端交互模型
+                    </h3>
+                    <div class="flex flex-col h-full justify-center space-y-6">
+                        <div class="flex items-center justify-between bg-sky-50 p-4 rounded-lg border border-sky-100 cursor-pointer hover:bg-sky-100 transition-colors" onclick="showDetail('admin-detail')">
+                            <div class="flex items-center">
+                                <div class="bg-sky-500 text-white p-3 rounded-full mr-4">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">管理端 (商家)</h4>
+                                    <p class="text-xs text-slate-500">Web后台: 维护数据, 处理订单, 查看报表</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-sky-300"></i>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <i class="fa-solid fa-arrow-down-up text-slate-300"></i>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-orange-50 p-4 rounded-lg border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors" onclick="showDetail('user-detail')">
+                            <div class="flex items-center">
+                                <div class="bg-orange-500 text-white p-3 rounded-full mr-4">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">用户端 (C端)</h4>
+                                    <p class="text-xs text-slate-500">微信小程序: 点餐, 支付, 催单</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-orange-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Info Box for Dashboard Clicks -->
+            <div id="detail-box" class="hidden glass-panel p-6 rounded-xl border-l-4 border-slate-500 bg-slate-50 mt-4">
+                <h4 id="detail-title" class="font-bold text-lg mb-2">详情</h4>
+                <p id="detail-content" class="text-slate-600"></p>
+            </div>
+        </div>
+
+        <!-- View: Functional Modules -->
+        <div id="features-view" class="hidden space-y-8 animate-fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">核心功能模块与 AI 演示</h2>
+                <div class="bg-white p-1 rounded-lg shadow-sm mt-4 md:mt-0">
+                    <button id="btn-admin" onclick="toggleFeature('admin')" class="px-4 py-2 rounded-md text-sm font-medium bg-sky-500 text-white shadow-sm transition-all">管理端功能</button>
+                    <button id="btn-user" onclick="toggleFeature('user')" class="px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">用户端功能</button>
+                </div>
+            </div>
+
+            <!-- Admin Features Grid -->
+            <div id="admin-features" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards generated by JS -->
+            </div>
+
+            <!-- User Features Grid -->
+            <div id="user-features" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards generated by JS -->
+            </div>
+
+            <!-- AI Section: Dynamic Content Area -->
+            <!-- This section changes based on whether 'Admin' or 'User' is selected above -->
+
+            <!-- ADMIN AI: Operational Insights -->
+            <div id="admin-ai-section" class="mt-12 pt-8 border-t border-slate-200">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">📊 数据统计 (ReportController)</h3>
+                        <p class="text-slate-500 text-sm">系统提供经营数据可视化，包括营业额、订单统计及销量排名。下图为系统生成的模拟 Top 10 销量报表。</p>
+                    </div>
+                    <button onclick="generateAdminInsights()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center text-sm font-medium">
+                        <span id="admin-ai-btn-text">✨ 生成智能运营分析</span>
+                        <div id="admin-ai-loader" class="loader ml-2 hidden"></div>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-6 rounded-xl col-span-2">
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Analysis Result Area -->
+                    <div class="glass-panel p-6 rounded-xl bg-purple-50 border border-purple-100 flex flex-col">
+                        <h4 class="font-bold text-purple-900 mb-4 flex items-center"><i class="fa-solid fa-lightbulb mr-2"></i> AI 洞察报告</h4>
+                        <div id="admin-ai-output" class="text-sm text-purple-800 leading-relaxed flex-grow overflow-y-auto">
+                            点击上方按钮，让 Gemini 分析左侧的销售数据并提供经营建议...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USER AI: Smart Dish Recommender -->
+            <div id="user-ai-section" class="hidden mt-12 pt-8 border-t border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">🤖 智能点餐助手 (User AI Demo)</h3>
+                <div class="glass-panel p-8 rounded-xl bg-gradient-to-r from-orange-50 to-white border border-orange-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h4 class="font-bold text-lg text-slate-800 mb-2">不知道吃什么？</h4>
+                            <p class="text-slate-600 text-sm mb-4">
+                                输入您的口味偏好（例如：“想吃辣的”、“清淡一点”或“适合两个人的套餐”），让 AI 基于当前菜单为您推荐。
+                            </p>
+                            <div class="flex space-x-2">
+                                <input type="text" id="user-preference-input" placeholder="输入您的口味偏好..." class="flex-grow px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm">
+                                <button onclick="getDishRecommendation()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center text-sm font-medium whitespace-nowrap">
+                                    <span id="user-ai-btn-text">✨ AI 推荐</span>
+                                    <div id="user-ai-loader" class="loader ml-2 border-white border-t-orange-600 hidden"></div>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-inner border border-slate-100 min-h-[120px] relative">
+                            <div class="absolute top-2 left-2 text-xs text-slate-300 uppercase font-bold">推荐结果</div>
+                            <div id="user-ai-output" class="mt-4 text-sm text-slate-700 leading-relaxed">
+                                请在左侧输入偏好，等待 AI 推荐...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- View: Technical Highlights -->
+        <div id="technical-view" class="hidden space-y-8 animate-fade-in">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">关键业务逻辑与技术亮点</h2>
+
+            <!-- Interactive Order Flow -->
+            <div class="glass-panel p-8 rounded-xl">
+                <h3 class="text-lg font-bold text-slate-800 mb-6">🔄 订单全生命周期处理流程</h3>
+                <div class="relative">
+                    <div class="absolute left-4 top-0 bottom-0 w-1 bg-slate-200"></div>
+                    <div class="space-y-8 pl-12" id="order-flow-container">
+                        <!-- Steps generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-xl bg-gradient-to-br from-white to-sky-50">
+                    <div class="text-sky-500 text-3xl mb-4"><i class="fa-solid fa-stopwatch"></i></div>
+                    <h4 class="font-bold text-lg mb-2">Spring Task 定时任务</h4>
+                    <ul class="text-sm text-slate-600 list-disc list-inside space-y-1">
+                        <li>每分钟检查超时未支付订单 (15min)</li>
+                        <li>每日凌晨自动完成派送中订单</li>
+                        <li>确保数据最终一致性</li>
+                    </ul>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl bg-gradient-to-br from-white to-indigo-50">
+                    <div class="text-indigo-500 text-3xl mb-4"><i class="fa-solid fa-robot"></i></div>
+                    <h4 class="font-bold text-lg mb-2">AOP 自动填充</h4>
+                    <p class="text-sm text-slate-600 mb-2">自定义注解 <code>@AutoFill</code></p>
+                    <p class="text-sm text-slate-600">
+                        自动拦截 INSERT/UPDATE 操作，统一处理 <code>createTime</code>, <code>updateUser</code> 等公共字段，减少冗余代码。
+                    </p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl bg-gradient-to-br from-white to-orange-50">
+                    <div class="text-orange-500 text-3xl mb-4"><i class="fa-solid fa-tower-broadcast"></i></div>
+                    <h4 class="font-bold text-lg mb-2">WebSocket 消息推送</h4>
+                    <p class="text-sm text-slate-600 mb-2">实现了商家端的“语音播报”功能。</p>
+                    <div class="flex space-x-2 mt-2">
+                        <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">Type=1 来单</span>
+                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Type=2 催单</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-slate-500 text-sm">
+            <p>Generated by Canvas Create Webapp | Based on Sky Take Out Project Report | AI Features Powered by Gemini</p>
+        </div>
+    </footer>
+
+    <script>
+        const apiKey = ""; // System provides key
+
+        // --- Data Definitions ---
+
+        // 1. Tech Stack Data
+        const techStackData = {
+            labels: ['Spring Boot (Core)', 'MySQL (Data)', 'Redis (Cache)', 'WebSocket (Push)', 'Aliyun OSS (Storage)', 'WeChat Pay (Payment)'],
+            datasets: [{
+                label: 'Tech Composition',
+                data: [30, 20, 15, 15, 10, 10],
+                backgroundColor: [
+                    '#0ea5e9', // Sky 500
+                    '#3b82f6', // Blue 500
+                    '#ef4444', // Red 500 (Redis)
+                    '#f97316', // Orange 500
+                    '#10b981', // Emerald 500
+                    '#22c55e'  // Green 500 (WeChat)
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        };
+
+        // 2. Feature Lists
+        const features = {
+            admin: [
+                {
+                    title: "员工管理",
+                    icon: "fa-users",
+                    desc: "MD5加密登录，JWT鉴权。支持员工增删改查及账号状态启用/禁用。",
+                    color: "text-blue-500"
+                },
+                {
+                    title: "菜品与套餐",
+                    icon: "fa-utensils",
+                    desc: "核心数据维护。支持图片上传(OSS)、口味设置、批量删除及起售停售控制。",
+                    color: "text-green-500"
+                },
+                {
+                    title: "订单处理",
+                    icon: "fa-clipboard-list",
+                    desc: "接单、拒单、派送、完成。支持按多条件搜索订单。",
+                    color: "text-orange-500"
+                },
+                {
+                    title: "数据报表",
+                    icon: "fa-chart-line",
+                    desc: "营业额统计、订单完成率、销量Top10统计可视化。",
+                    color: "text-purple-500"
+                },
+                {
+                    title: "店铺状态",
+                    icon: "fa-store",
+                    desc: "基于Redis缓存店铺营业状态，一键切换营业/打烊。",
+                    color: "text-red-500"
+                }
+            ],
+            user: [
+                {
+                    title: "微信登录",
+                    icon: "fa-comment",
+                    desc: "调用 jscode2session 接口，获取 openid，新用户自动注册。",
+                    color: "text-green-600"
+                },
+                {
+                    title: "点餐流程",
+                    icon: "fa-cart-plus",
+                    desc: "浏览菜单（支持缓存），选择规格口味，加入购物车。",
+                    color: "text-orange-500"
+                },
+                {
+                    title: "下单支付",
+                    icon: "fa-credit-card",
+                    desc: "地址管理，提交订单。集成微信支付，支付成功回调通知。",
+                    color: "text-sky-500"
+                },
+                {
+                    title: "订单交互",
+                    icon: "fa-bell",
+                    desc: "查看历史订单。支持取消订单、再来一单、一键催单。",
+                    color: "text-indigo-500"
+                }
+            ]
+        };
+
+        // 3. Order Flow Steps
+        const orderSteps = [
+            {
+                title: "用户下单 & 支付",
+                desc: "用户提交订单，系统校验购物车与地址。调用微信支付接口。支付成功后 PayNotifyController 更新状态为 '已支付'。",
+                tech: "Controller, Service, WeChat API",
+                status: "PENDING_PAYMENT -> PAID"
+            },
+            {
+                title: "商家接单 (WebSocket)",
+                desc: "支付成功后，服务器通过 WebSocket 推送 type=1 消息。商家端语音播报，点击 '接单'。",
+                tech: "WebSocketServer, OrderController",
+                status: "TO_BE_CONFIRMED -> CONFIRMED"
+            },
+            {
+                title: "餐品制作 & 派送",
+                desc: "商家制作完成，点击 '派送'。后台更新状态。每日凌晨 Spring Task 自动检查未完成的派送订单。",
+                tech: "OrderController, Spring Task",
+                status: "CONFIRMED -> DELIVERY_IN_PROGRESS"
+            },
+            {
+                title: "订单完成",
+                desc: "送达后商家或系统标记 '完成'。用户可进行评价或再来一单。",
+                tech: "MySQL Update",
+                status: "COMPLETED"
+            }
+        ];
+
+        // 4. Mock Statistics Data (For ReportController Visualization)
+        const salesData = {
+            labels: ['香辣鸡翅', '宫保鸡丁', '水煮鱼', '麻婆豆腐', '扬州炒饭', '酸菜鱼', '可乐'],
+            datasets: [{
+                label: '销量 (份)',
+                data: [320, 280, 250, 210, 180, 150, 120],
+                backgroundColor: 'rgba(14, 165, 233, 0.7)', // Sky 500 with opacity
+                borderColor: '#0ea5e9',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        };
+
+        // --- Application Logic ---
+
+        // View Switching
+        function switchView(viewName) {
+            // Hide all views
+            ['dashboard', 'features', 'technical'].forEach(v => {
+                document.getElementById(`${v}-view`).classList.add('hidden');
+            });
+            // Show selected
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+
+            // Update Nav
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-white', 'bg-sky-500');
+                el.classList.add('text-slate-600', 'hover:text-sky-500');
+                if(el.getAttribute('onclick').includes(viewName)) {
+                    el.classList.add('active', 'bg-sky-500', 'text-white');
+                    el.classList.remove('text-slate-600', 'hover:text-sky-500');
+                }
+            });
+        }
+
+        // Toggle Admin/User Features
+        function toggleFeature(type) {
+            const adminGrid = document.getElementById('admin-features');
+            const userGrid = document.getElementById('user-features');
+            const btnAdmin = document.getElementById('btn-admin');
+            const btnUser = document.getElementById('btn-user');
+
+            const adminAI = document.getElementById('admin-ai-section');
+            const userAI = document.getElementById('user-ai-section');
+
+            if (type === 'admin') {
+                adminGrid.classList.remove('hidden');
+                userGrid.classList.add('hidden');
+                adminAI.classList.remove('hidden');
+                userAI.classList.add('hidden');
+
+                btnAdmin.className = "px-4 py-2 rounded-md text-sm font-medium bg-sky-500 text-white shadow-sm transition-all";
+                btnUser.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all";
+            } else {
+                adminGrid.classList.add('hidden');
+                userGrid.classList.remove('hidden');
+                adminAI.classList.add('hidden');
+                userAI.classList.remove('hidden');
+
+                btnUser.className = "px-4 py-2 rounded-md text-sm font-medium bg-orange-500 text-white shadow-sm transition-all";
+                btnAdmin.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all";
+            }
+        }
+
+        // Render Feature Cards
+        function renderFeatures() {
+            const createCard = (item) => `
+                <div class="feature-card bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <div class="p-2 rounded-lg bg-slate-50 mr-3">
+                            <i class="fa-solid ${item.icon} ${item.color} text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800">${item.title}</h4>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">${item.desc}</p>
+                </div>
+            `;
+
+            document.getElementById('admin-features').innerHTML = features.admin.map(createCard).join('');
+            document.getElementById('user-features').innerHTML = features.user.map(createCard).join('');
+        }
+
+        // Render Order Flow
+        function renderOrderFlow() {
+            const container = document.getElementById('order-flow-container');
+            container.innerHTML = orderSteps.map((step, index) => `
+                <div class="relative">
+                    <div class="absolute -left-[53px] top-1 bg-white border-2 border-sky-500 rounded-full w-6 h-6 flex items-center justify-center z-10">
+                        <span class="text-xs font-bold text-sky-600">${index + 1}</span>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm hover:border-sky-300 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-slate-800">${step.title}</h4>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">${step.status}</span>
+                        </div>
+                        <p class="text-sm text-slate-600 mb-3">${step.desc}</p>
+                        <div class="text-xs text-sky-600 font-semibold bg-sky-50 inline-block px-2 py-1 rounded">
+                            <i class="fa-solid fa-code mr-1"></i> ${step.tech}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show Details Interaction
+        function showDetail(type) {
+            const box = document.getElementById('detail-box');
+            const title = document.getElementById('detail-title');
+            const content = document.getElementById('detail-content');
+
+            box.classList.remove('hidden');
+            box.classList.add('animate-pulse-once');
+
+            if (type === 'admin-detail') {
+                title.innerText = "管理端核心职责";
+                title.className = "font-bold text-lg mb-2 text-sky-600";
+                content.innerHTML = "管理端主要用于数据的维护（CRUD）和业务流程的控制。它包括员工管理、分类/菜品/套餐管理，以及最重要的<strong>订单处理流程</strong>（接单、拒单、派送）。此外，通过 ReportController 提供营业额和销量的统计报表。";
+            } else if (type === 'user-detail') {
+                title.innerText = "用户端核心体验";
+                title.className = "font-bold text-lg mb-2 text-orange-500";
+                content.innerHTML = "用户端基于微信小程序，通过 UserService.wxLogin 实现无感登录。核心流程围绕<strong>点餐</strong>展开：浏览缓存菜单 -> 购物车管理 -> 提交订单 -> 微信支付。支付回调是连接用户与商家的关键节点。";
+            }
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            // 1. Tech Stack Chart
+            const ctx1 = document.getElementById('techStackChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: techStackData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { font: { family: "'Inter', sans-serif" }, boxWidth: 12 }
+                        }
+                    }
+                }
+            });
+
+            // 2. Sales Report Chart
+            const ctx2 = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: salesData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Horizontal Bar
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` 销量: ${context.raw} 份`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Gemini AI Logic ---
+
+        async function callGemini(prompt) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Request Failed');
+
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("AI Error:", error);
+                return "AI 服务暂时不可用，请稍后再试。";
+            }
+        }
+
+        // Feature 1: Admin Data Insights
+        async function generateAdminInsights() {
+            const btnText = document.getElementById('admin-ai-btn-text');
+            const loader = document.getElementById('admin-ai-loader');
+            const output = document.getElementById('admin-ai-output');
+
+            btnText.textContent = "分析中...";
+            loader.classList.remove('hidden');
+            output.innerHTML = "<span class='text-slate-400'>正在分析销售数据趋势...</span>";
+
+            // Prepare Data Summary
+            const summary = salesData.labels.map((label, index) => `${label}: ${salesData.datasets[0].data[index]}份`).join(', ');
+            const prompt = `你是一个餐饮管理专家。以下是苍穹外卖系统的近期菜品销量数据：${summary}。请生成一份简短的运营洞察报告（中文）。包含：1. 销量冠军点评。2. 潜力菜品分析。3. 一条针对性的营销建议。使用 Markdown 格式，不要加粗。`;
+
+            const result = await callGemini(prompt);
+
+            output.innerHTML = result.replace(/\n/g, '<br>');
+            btnText.textContent = "✨ 重新生成";
+            loader.classList.add('hidden');
+        }
+
+        // Feature 2: User Dish Recommendation
+        async function getDishRecommendation() {
+            const input = document.getElementById('user-preference-input').value;
+            if (!input.trim()) return;
+
+            const btnText = document.getElementById('user-ai-btn-text');
+            const loader = document.getElementById('user-ai-loader');
+            const output = document.getElementById('user-ai-output');
+
+            btnText.textContent = "思考中...";
+            loader.classList.remove('hidden');
+
+            const menu = salesData.labels.join(', ');
+            const prompt = `你是一个外卖APP的智能推荐助手。我们的菜单上有：${menu}。用户说：“${input}”。请从菜单中推荐1-2款最合适的菜品，并用诱人的语言简短描述推荐理由（中文）。语气要热情亲切。`;
+
+            const result = await callGemini(prompt);
+
+            output.innerHTML = result.replace(/\n/g, '<br>');
+            btnText.textContent = "✨ AI 推荐";
+            loader.classList.add('hidden');
+        }
+
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFeatures();
+            renderOrderFlow();
+            initCharts();
+        });
+
+    </script>
+</body>
+</html>
