@@ -28,12 +28,15 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="/">✈️ FLIGHT PRICE PREDICTOR</a>
             </div>
-            <div class="navbar-right" style="float: right;">
+            <div class="navbar-right" style="float: right; display: flex; align-items: center;">
+                <a href="/analysis" id="btn-analysis" class="btn btn-info btn-sm" style="margin-right: 10px;">📊 View Data Analysis</a>
                 {% if session.username %}
-                    <span class="navbar-text" style="color: white;">Hello, {{ session.username }}!</span>
-                    <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">Logout</a>
+                    <a href="/flights" id="btn-manage" class="btn btn-success btn-sm" style="margin-right: 10px;">📋 Manage Flights</a>
+                    <span class="navbar-text" style="color: white; margin-right: 10px;">Hello, {{ session.username }}!</span>
+                    <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
                 {% else %}
-                    <a class="btn btn-outline-light" href="/login">Login</a>
+                    <a href="/login" id="btn-manage" class="btn btn-success btn-sm" style="margin-right: 10px;">🔐 Login to Manage Flights</a>
+                    <a class="btn btn-outline-light btn-sm" href="/login">Login</a>
                 {% endif %}
             </div>
         </div>
@@ -52,14 +55,14 @@
 
         <br>
 
-        <form action="\predict" method="post">
+        <form action="/predict" method="post" onsubmit="return validateDates()">
             <div class="row">
                 <div class="col-lg-6 col-md-12">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">🛫 Departure Date & Time</h5>
                             <!-- Departure -->
-                            <input type="datetime-local" name="Dep_Time" id="Dep_Time" class="form-control" required="required">
+                            <input type="datetime-local" name="Dep_Time" id="Dep_Time" class="form-control" required="required" value="{{ form_data.Dep_Time if form_data else '' }}">
                         </div>
                     </div>
                 </div>
@@ -69,7 +72,7 @@
                         <div class="card-body">
                             <h5 class="card-title">🛬 Arrival Date & Time</h5>
                             <!-- Arrival -->
-                            <input type="datetime-local" name="Arrival_Time" id="Arrival_Time" class="form-control" required="required">
+                            <input type="datetime-local" name="Arrival_Time" id="Arrival_Time" class="form-control" required="required" value="{{ form_data.Arrival_Time if form_data else '' }}">
                         </div>
                     </div>
                 </div>
@@ -83,10 +86,10 @@
                             <h5 class="card-title">🏙️ Source City</h5>
                             <select name="Source" id="Source" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Source City</option>
-                                <option value="Delhi">Delhi</option>
-                                <option value="Kolkata">Kolkata</option>
-                                <option value="Mumbai">Mumbai</option>
-                                <option value="Chennai">Chennai</option>
+                                <option value="Delhi" {% if form_data and form_data.Source == 'Delhi' %}selected{% endif %}>Delhi</option>
+                                <option value="Kolkata" {% if form_data and form_data.Source == 'Kolkata' %}selected{% endif %}>Kolkata</option>
+                                <option value="Mumbai" {% if form_data and form_data.Source == 'Mumbai' %}selected{% endif %}>Mumbai</option>
+                                <option value="Chennai" {% if form_data and form_data.Source == 'Chennai' %}selected{% endif %}>Chennai</option>
                             </select>
                         </div>
                     </div>
@@ -99,11 +102,11 @@
                             <!-- Destination -->
                             <select name="Destination" id="Destination" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Destination City</option>
-                                <option value="Cochin">Cochin</option>
-                                <option value="Delhi">Delhi</option>
-                                <option value="New Delhi">New Delhi</option>
-                                <option value="Hyderabad">Hyderabad</option>
-                                <option value="Kolkata">Kolkata</option>
+                                <option value="Cochin" {% if form_data and form_data.Destination == 'Cochin' %}selected{% endif %}>Cochin</option>
+                                <option value="Delhi" {% if form_data and form_data.Destination == 'Delhi' %}selected{% endif %}>Delhi</option>
+                                <option value="New Delhi" {% if form_data and form_data.Destination == 'New Delhi' %}selected{% endif %}>New Delhi</option>
+                                <option value="Hyderabad" {% if form_data and form_data.Destination == 'Hyderabad' %}selected{% endif %}>Hyderabad</option>
+                                <option value="Kolkata" {% if form_data and form_data.Destination == 'Kolkata' %}selected{% endif %}>Kolkata</option>
                             </select>
                         </div>
                     </div>
@@ -118,11 +121,11 @@
                             <!-- Total Stops -->
                             <select name="stops" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Number of Stops</option>
-                                <option value="0">Non-Stop ✈️</option>
-                                <option value="1">1 Stop 🛄</option>
-                                <option value="2">2 Stops 🛄</option>
-                                <option value="3">3 Stops 🛄</option>
-                                <option value="4">4+ Stops 🧳</option>
+                                <option value="0" {% if form_data and form_data.stops|string == '0' %}selected{% endif %}>Non-Stop ✈️</option>
+                                <option value="1" {% if form_data and form_data.stops|string == '1' %}selected{% endif %}>1 Stop 🛄</option>
+                                <option value="2" {% if form_data and form_data.stops|string == '2' %}selected{% endif %}>2 Stops 🛄</option>
+                                <option value="3" {% if form_data and form_data.stops|string == '3' %}selected{% endif %}>3 Stops 🛄</option>
+                                <option value="4" {% if form_data and form_data.stops|string == '4' %}selected{% endif %}>4+ Stops 🧳</option>
                             </select>
                         </div>
                     </div>
@@ -135,18 +138,18 @@
                             <!-- Airline -->
                             <select name="airline" id="airline" class="form-control custom-select" required="required" style="height: 45px; padding: 8px 12px;">
                                 <option value="">Select Airline</option>
-                                <option value="Jet Airways">Jet Airways</option>
-                                <option value="IndiGo">IndiGo</option>
-                                <option value="Air India">Air India</option>
-                                <option value="Multiple carriers">Multiple carriers</option>
-                                <option value="SpiceJet">SpiceJet</option>
-                                <option value="Vistara">Vistara</option>
-                                <option value="Air Asia">Air Asia</option>
-                                <option value="GoAir">GoAir</option>
-                                <option value="Multiple carriers Premium economy">Multiple carriers Premium economy</option>
-                                <option value="Jet Airways Business">Jet Airways Business</option>
-                                <option value="Vistara Premium economy">Vistara Premium economy</option>
-                                <option value="Trujet">Trujet</option>
+                                <option value="Jet Airways" {% if form_data and form_data.airline == 'Jet Airways' %}selected{% endif %}>Jet Airways</option>
+                                <option value="IndiGo" {% if form_data and form_data.airline == 'IndiGo' %}selected{% endif %}>IndiGo</option>
+                                <option value="Air India" {% if form_data and form_data.airline == 'Air India' %}selected{% endif %}>Air India</option>
+                                <option value="Multiple carriers" {% if form_data and form_data.airline == 'Multiple carriers' %}selected{% endif %}>Multiple carriers</option>
+                                <option value="SpiceJet" {% if form_data and form_data.airline == 'SpiceJet' %}selected{% endif %}>SpiceJet</option>
+                                <option value="Vistara" {% if form_data and form_data.airline == 'Vistara' %}selected{% endif %}>Vistara</option>
+                                <option value="Air Asia" {% if form_data and form_data.airline == 'Air Asia' %}selected{% endif %}>Air Asia</option>
+                                <option value="GoAir" {% if form_data and form_data.airline == 'GoAir' %}selected{% endif %}>GoAir</option>
+                                <option value="Multiple carriers Premium economy" {% if form_data and form_data.airline == 'Multiple carriers Premium economy' %}selected{% endif %}>Multiple carriers Premium economy</option>
+                                <option value="Jet Airways Business" {% if form_data and form_data.airline == 'Jet Airways Business' %}selected{% endif %}>Jet Airways Business</option>
+                                <option value="Vistara Premium economy" {% if form_data and form_data.airline == 'Vistara Premium economy' %}selected{% endif %}>Vistara Premium economy</option>
+                                <option value="Trujet" {% if form_data and form_data.airline == 'Trujet' %}selected{% endif %}>Trujet</option>
                             </select>
                         </div>
                     </div>
@@ -166,25 +169,47 @@
         <br>
         
         <div class="row">
-            <div class="col-12">
+            <div class="col-12 text-center">
                 <h3>{{ prediction_text }}</h3>
+                {% if prediction_value %}
+                    <!-- Flight Details Card -->
+                    <div id="flight-details-container" style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h4>🎫 Flight Details</h4>
+                        <hr>
+                        <div class="row text-left">
+                            <div class="col-md-6">
+                                <p><strong>✈️ Airline:</strong> {{ flight_details.airline }}</p>
+                                <p><strong>🏙️ From:</strong> {{ flight_details.source }}</p>
+                                <p><strong>🛫 Departure:</strong> {{ flight_details.departure_time }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>🧳 Stops:</strong> 
+                                    {% if flight_details.stops == 0 %}Non-Stop
+                                    {% elif flight_details.stops == 1 %}1 Stop
+                                    {% else %}{{ flight_details.stops }} Stops{% endif %}
+                                </p>
+                                <p><strong>🌆 To:</strong> {{ flight_details.destination }}</p>
+                                <p><strong>🛬 Arrival:</strong> {{ flight_details.arrival_time }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="gauge-container" style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h4>📊 Price Analysis</h4>
+                        <div id="gauge-chart" style="width: 100%; height: 400px;"></div>
+                        <p class="text-muted">
+                            Low: &lt; Rs. {{ price_stats['25%']|round|int }} | 
+                            Average: Rs. {{ price_stats['25%']|round|int }} - {{ price_stats['75%']|round|int }} | 
+                            High: &gt; Rs. {{ price_stats['75%']|round|int }}
+                        </p>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
         <br><br>
         
-        <div class="row">
-            <div class="col-12 text-center">
-                <a href="/analysis" class="btn btn-info btn-lg">📊 View Data Analysis</a>
-                {% if session.username %}
-                    <a href="/flights" class="btn btn-success btn-lg">📋 Manage Flights</a>
-                {% else %}
-                    <a href="/login" class="btn btn-success btn-lg">🔐 Login to Manage Flights</a>
-                {% endif %}
-            </div>
-        </div>
-        
-        <br><br>
+
         
         <div class="row">
             <div class="col-12">
@@ -289,12 +314,15 @@
             
             // 更新按钮文本
             document.querySelector('input[type="submit"]').value = translations[lang]['Predict Flight Price'];
-            document.querySelector('a.btn-info').textContent = translations[lang]['View Data Analysis'];
-            document.querySelector('a.btn-success').textContent = translations[lang]['Manage Flights'];
+            document.getElementById('btn-analysis').textContent = translations[lang]['View Data Analysis'];
             
-            // 更新其他链接文本
-            if (document.querySelector('a.btn-success') && document.querySelector('a.btn-success').textContent === 'Login to Manage Flights') {
-                document.querySelector('a.btn-success').textContent = translations[lang]['Login to Manage Flights'];
+            var btnManage = document.getElementById('btn-manage');
+            if (btnManage) {
+                if (btnManage.getAttribute('href') === '/login') {
+                    btnManage.textContent = translations[lang]['Login to Manage Flights'];
+                } else {
+                    btnManage.textContent = translations[lang]['Manage Flights'];
+                }
             }
             
             // 更新工作原理部分
@@ -316,7 +344,142 @@
         document.getElementById('language-toggle').addEventListener('click', function() {
             switchLanguage(currentLanguage === 'zh' ? 'en' : 'zh');
         });
+
+        // 表单日期验证
+        function validateDates() {
+            var depTime = document.getElementById("Dep_Time").value;
+            var arrTime = document.getElementById("Arrival_Time").value;
+            
+            if (depTime && arrTime) {
+                if (new Date(arrTime) <= new Date(depTime)) {
+                    // 根据当前语言显示错误消息
+                    const errorMessage = currentLanguage === 'zh' 
+                        ? "错误：到达时间必须晚于出发时间。" 
+                        : "Error: Arrival time must be later than departure time.";
+                    alert(errorMessage);
+                    return false;
+                }
+            }
+            return true;
+        }
     </script>
+    <!-- ECharts for Gauge Chart -->
+    {% if prediction_value %}
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var chartDom = document.getElementById('gauge-chart');
+            if (chartDom) {
+                var myChart = echarts.init(chartDom);
+                var predictionValue = {{ prediction_value }};
+                var stats = {{ price_stats | tojson }};
+                
+                // Calculate max value for the gauge (either max from stats or slightly more than prediction)
+                var maxVal = Math.max(stats.max, predictionValue * 1.2);
+                maxVal = Math.ceil(maxVal / 1000) * 1000; // Round up to nearest 1000
+                
+                var p25 = stats['25%'];
+                var p75 = stats['75%'];
+                
+                // Calculate ratios for color segments
+                var ratio25 = p25 / maxVal;
+                var ratio75 = p75 / maxVal;
+                
+                // Ensure ratios are valid
+                ratio25 = Math.min(Math.max(ratio25, 0), 1);
+                ratio75 = Math.min(Math.max(ratio75, ratio25), 1);
+
+                var option = {
+                    tooltip: {
+                        formatter: '{a} <br/>{b} : {c}'
+                    },
+                    series: [
+                        {
+                            name: 'Price Prediction',
+                            type: 'gauge',
+                            min: 0,
+                            max: maxVal,
+                            progress: {
+                                show: true
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    width: 18,
+                                    color: [
+                                        [ratio25, '#28a745'], // Low (Green)
+                                        [ratio75, '#ffc107'], // Average (Yellow)
+                                        [1, '#dc3545']        // High (Red)
+                                    ]
+                                }
+                            },
+                            pointer: {
+                                icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+                                length: '12%',
+                                width: 20,
+                                offsetCenter: [0, '-60%'],
+                                itemStyle: {
+                                    color: 'auto'
+                                }
+                            },
+                            axisTick: {
+                                length: 12,
+                                lineStyle: {
+                                    color: 'auto',
+                                    width: 2
+                                }
+                            },
+                            splitLine: {
+                                length: 20,
+                                lineStyle: {
+                                    color: 'auto',
+                                    width: 5
+                                }
+                            },
+                            axisLabel: {
+                                color: '#464646',
+                                fontSize: 14,
+                                distance: -60,
+                                rotate: 'tangential',
+                                formatter: function (value) {
+                                    if (value === 0 || value === maxVal) {
+                                        return value;
+                                    }
+                                    return '';
+                                }
+                            },
+                            title: {
+                                offsetCenter: [0, '-20%'],
+                                fontSize: 20
+                            },
+                            detail: {
+                                fontSize: 30,
+                                offsetCenter: [0, '0%'],
+                                valueAnimation: true,
+                                formatter: function (value) {
+                                    return 'Rs. ' + Math.round(value);
+                                },
+                                color: 'auto'
+                            },
+                            data: [
+                                {
+                                    value: predictionValue,
+                                    name: 'Predicted Price'
+                                }
+                            ]
+                        }
+                    ]
+                };
+
+                myChart.setOption(option);
+                
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        });
+    </script>
+    {% endif %}
+
 </body>
 
 </html>

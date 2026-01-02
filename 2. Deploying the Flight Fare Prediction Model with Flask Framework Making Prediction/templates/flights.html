@@ -15,6 +15,13 @@
             margin-bottom: 5px;
         }
         
+        /* Fix dropdown text cutoff */
+        select.form-control {
+            height: auto !important;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        
         .page-header {
             color: #ff6b6b;
             text-align: center;
@@ -38,6 +45,7 @@
                 <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
             <div class="navbar-right" style="float: right;">
+                <a href="/" class="btn btn-outline-light" style="margin-right: 10px;">🏠 返回首页</a>
                 <span class="navbar-text" style="color: white;">您好, {{ session.username }}!</span>
                 <a class="btn btn-outline-light" href="/logout" style="margin-left: 10px;">登出</a>
             </div>
@@ -74,16 +82,82 @@
             </div>
         {% endif %}
         
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <a href="/flights/add" class="btn btn-primary btn-lg">➕ 添加新航班</a>
-                <a href="/" class="btn btn-secondary btn-lg">🏠 返回首页</a>
+        <!-- Search and Filter Form -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <strong>🔍 搜索和筛选航班</strong>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/flights">
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>航空公司</label>
+                            <select class="form-control" name="airline">
+                                <option value="">所有航空公司</option>
+                                {% for a in airlines %}
+                                <option value="{{ a }}" {% if args.get('airline') == a %}selected{% endif %}>{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>出发地</label>
+                            <select class="form-control" name="source">
+                                <option value="">所有出发地</option>
+                                {% for s in sources %}
+                                <option value="{{ s }}" {% if args.get('source') == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>目的地</label>
+                            <select class="form-control" name="destination">
+                                <option value="">所有目的地</option>
+                                {% for d in destinations %}
+                                <option value="{{ d }}" {% if args.get('destination') == d %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                         <div class="form-group col-md-3">
+                            <label>经停次数</label>
+                            <input type="number" class="form-control" name="total_stops" value="{{ args.get('total_stops', '') }}" placeholder="例如: 0, 1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>出发日期</label>
+                            <input type="date" class="form-control" name="departure_time" value="{{ args.get('departure_time', '') }}">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>到达日期</label>
+                            <input type="date" class="form-control" name="arrival_time" value="{{ args.get('arrival_time', '') }}">
+                        </div>
+                         <div class="form-group col-md-3">
+                            <label>排序方式</label>
+                            <select class="form-control" name="sort_by">
+                                <option value="">默认 (添加时间)</option>
+                                <option value="price" {% if args.get('sort_by') == 'price' %}selected{% endif %}>价格</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                             <label>排序顺序</label>
+                            <select class="form-control" name="sort_order">
+                                <option value="asc" {% if args.get('sort_order') == 'asc' %}selected{% endif %}>升序 (低 -> 高)</option>
+                                <option value="desc" {% if args.get('sort_order') == 'desc' %}selected{% endif %}>降序 (高 -> 低)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <a href="/flights/add" class="btn btn-success mr-2">➕ 添加新航班</a>
+                        <a href="/flights" class="btn btn-secondary mr-2">重置</a>
+                        <button type="submit" class="btn btn-primary">应用筛选</button>
+                    </div>
+                </form>
             </div>
         </div>
         
         {% if flights %}
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-bordered table-hover">
                 <thead class="thead-dark">
                     <tr>
                         <th>ID</th>
@@ -110,13 +184,13 @@
                         <td>{{ flight.departure_time }}</td>
                         <td>{{ flight.arrival_time }}</td>
                         <td>{{ flight.total_stops }}</td>
-                        <td>{{ flight.price }}</td>
+                        <td><strong>₹ {{ flight.price }}</strong></td>
                         {% if user.is_admin() %}
                             <td>
                                 {% if flight.user %}
-                                    {{ flight.user.username }}
+                                    <span class="badge badge-info">{{ flight.user.username }}</span>
                                 {% else %}
-                                    <em>系统</em>
+                                    <em class="text-muted">系统</em>
                                 {% endif %}
                             </td>
                         {% endif %}
@@ -129,16 +203,64 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('list_flights', page=pagination.prev_num, **params) }}">上一页</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">上一页</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if pagination.page == page_num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('list_flights', page=page_num, **params) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('list_flights', page=pagination.next_num, **params) }}">下一页</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">下一页</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        <div class="text-center text-muted mt-2">
+            <small>显示第 {{ (pagination.page - 1) * pagination.per_page + 1 }} 到 {{ [pagination.page * pagination.per_page, pagination.total] | min }} 条，共 {{ pagination.total }} 条记录</small>
+        </div>
+        {% endif %}
+        
         {% else %}
         <div class="alert alert-info" role="alert">
             <h4 class="alert-heading">📭 未找到航班</h4>
-            {% if user.is_admin() %}
-                <p>数据库中没有航班记录。</p>
+            <p>没有符合条件的航班记录。</p>
+            {% if args %}
+                <p>尝试调整筛选条件或 <a href="/flights">重置筛选</a>。</p>
             {% else %}
-                <p>您尚未创建任何航班。</p>
+                <p>点击 "添加新航班" 来添加您的第一条航班记录！</p>
             {% endif %}
-            <hr>
-            <p class="mb-0">点击 "添加新航班" 来添加您的第一条航班记录！</p>
         </div>
         {% endif %}
     </div>

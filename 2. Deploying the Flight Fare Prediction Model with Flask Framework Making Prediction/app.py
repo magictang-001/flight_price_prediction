@@ -92,6 +92,40 @@ except Exception as e:
     pip install scikit-learn==0.22.1
     """)
 
+# Load price statistics for the gauge chart
+price_stats = {
+    'min': 1759,
+    'max': 79512,
+    'mean': 9087,
+    '25%': 5277,
+    '50%': 8372,
+    '75%': 12373
+}
+
+try:
+    # Try to load from actual data if available
+    # The data file is in the sibling directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    data_path = os.path.join(project_root, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices', 'Data_Train.xlsx')
+    
+    if os.path.exists(data_path):
+        # We need openpyxl or xlrd to read excel
+        try:
+            df_train = pd.read_excel(data_path)
+            price_stats = {
+                'min': float(df_train['Price'].min()),
+                'max': float(df_train['Price'].max()),
+                'mean': float(df_train['Price'].mean()),
+                '25%': float(df_train['Price'].quantile(0.25)),
+                '50%': float(df_train['Price'].quantile(0.50)),
+                '75%': float(df_train['Price'].quantile(0.75))
+            }
+            print("Price statistics loaded from Data_Train.xlsx")
+        except ImportError:
+             print("Missing optional dependency (openpyxl/xlrd) to read Excel file. Using default stats.")
+except Exception as e:
+    print(f"Could not load price statistics from file, using defaults: {e}")
 
 
 @app.route("/")
@@ -194,16 +228,78 @@ def list_flights():
         # 检查用户角色
         user = User.query.get(session['user_id'])
         
-        if user.is_admin():
-            # 管理员可以看到所有航班
-            flights = Flight.query.all()
-        else:
+        # Base query
+        query = Flight.query
+        
+        if not user.is_admin():
             # 普通用户只能看到自己的航班
-            flights = Flight.query.filter_by(user_id=session['user_id']).all()
+            query = query.filter_by(user_id=session['user_id'])
             
-        return render_template('flights.html', flights=[f.to_dict() for f in flights], user=user)
+        # Get distinct values for dropdowns
+        distinct_airlines = [r.airline for r in query.with_entities(Flight.airline).distinct().order_by(Flight.airline).all()]
+        distinct_sources = [r.source for r in query.with_entities(Flight.source).distinct().order_by(Flight.source).all()]
+        distinct_destinations = [r.destination for r in query.with_entities(Flight.destination).distinct().order_by(Flight.destination).all()]
+            
+        # Filtering
+        airline = request.args.get('airline')
+        if airline:
+            query = query.filter(Flight.airline.ilike(f"%{airline}%"))
+            
+        source = request.args.get('source')
+        if source:
+            query = query.filter(Flight.source.ilike(f"%{source}%"))
+            
+        destination = request.args.get('destination')
+        if destination:
+            query = query.filter(Flight.destination.ilike(f"%{destination}%"))
+            
+        departure_time = request.args.get('departure_time')
+        if departure_time:
+            # Assumes YYYY-MM-DD input
+            query = query.filter(db.func.date(Flight.departure_time) == departure_time)
+            
+        arrival_time = request.args.get('arrival_time')
+        if arrival_time:
+            query = query.filter(db.func.date(Flight.arrival_time) == arrival_time)
+            
+        total_stops = request.args.get('total_stops')
+        if total_stops is not None and total_stops != '':
+            query = query.filter(Flight.total_stops == int(total_stops))
+
+        # Sorting
+        sort_by = request.args.get('sort_by')
+        sort_order = request.args.get('sort_order', 'asc')
+        
+        if sort_by == 'price':
+            if sort_order == 'desc':
+                query = query.order_by(Flight.price.desc())
+            else:
+                query = query.order_by(Flight.price.asc())
+        else:
+            # Default sort by ID desc (newest first)
+            query = query.order_by(Flight.id.desc())
+
+        # Pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        # Prepare params for pagination links (remove 'page' to avoid conflict)
+        params = request.args.to_dict()
+        if 'page' in params:
+            del params['page']
+            
+        return render_template('flights.html', 
+                             flights=pagination.items, 
+                             pagination=pagination, 
+                             user=user,
+                             args=request.args,
+                             params=params,
+                             airlines=distinct_airlines,
+                             sources=distinct_sources,
+                             destinations=distinct_destinations)
     except Exception as e:
-        return render_template('flights.html', error=str(e))
+        return render_template('flights.html', error=str(e), flights=[], user=User.query.get(session['user_id']))
 
 
 @app.route('/flights/add', methods=['GET', 'POST'])
@@ -342,6 +438,15 @@ def predict():
             Arrival_hour = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").hour)
             Arrival_min = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").minute)
             # print("Arrival : ", Arrival_hour, Arrival_min)
+
+            # Check if arrival time is later than departure time
+            dep_datetime = pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M")
+            arr_datetime = pd.to_datetime(date_arr, format="%Y-%m-%dT%H:%M")
+            
+            if arr_datetime <= dep_datetime:
+                return render_template('home.html', 
+                                       prediction_text="Error: Arrival time must be later than departure time.",
+                                       form_data=request.form)
 
             # Duration
             dur_hour = abs(Arrival_hour - Dep_hour)
@@ -698,7 +803,33 @@ def predict():
                 db.session.rollback()
                 print(f"Database error: {db_error}")
 
-            return render_template('home.html',prediction_text="Your Flight price is Rs. {}".format(output))
+            # Prepare flight details to pass to template
+            flight_details = {
+                'airline': airline,
+                'source': Source,
+                'destination': Destination,
+                'departure_time': date_dep.replace('T', ' '),
+                'arrival_time': date_arr.replace('T', ' '),
+                'duration': f"{dur_hour}h {dur_min}m",
+                'stops': Total_stops
+            }
+
+            # Prepare form data to refill the form
+            form_data = {
+                'Dep_Time': date_dep,
+                'Arrival_Time': date_arr,
+                'Source': Source,
+                'Destination': Destination,
+                'stops': Total_stops,
+                'airline': airline
+            }
+
+            return render_template('home.html',
+                                   prediction_text="Your Flight price is Rs. {}".format(output),
+                                   prediction_value=output,
+                                   price_stats=price_stats,
+                                   flight_details=flight_details,
+                                   form_data=form_data)
         except Exception as e:
             return render_template('home.html',prediction_text="Error occurred during prediction. Please check your inputs.")
 
