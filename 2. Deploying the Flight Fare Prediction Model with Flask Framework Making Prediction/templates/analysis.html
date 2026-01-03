@@ -44,44 +44,37 @@
     <div class="container">
         <h1 class="page-header float-animation">📊 航班价格分析仪表板</h1>
         
-        {% if error %}
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">❌ 发生错误</h4>
-                <p>{{ error }}</p>
+        <div class="row">
+            <div class="col-12 chart-container">
+                <h3>🛩️ 各航空公司平均航班价格</h3>
+                <canvas id="airlineChart"></canvas>
             </div>
-        {% else %}
-            <div class="row">
-                <div class="col-12 chart-container">
-                    <h3>🛩️ 各航空公司平均航班价格</h3>
-                    <img src="data:image/png;base64,{{ plots.airline_prices }}" class="chart-img" alt="航空公司价格">
-                </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 chart-container">
+                <h3>📅 各月平均航班价格</h3>
+                <canvas id="monthlyChart"></canvas>
             </div>
-            
-            <div class="row">
-                <div class="col-12 chart-container">
-                    <h3>📅 各月平均航班价格</h3>
-                    <img src="data:image/png;base64,{{ plots.monthly_prices }}" class="chart-img" alt="每月价格">
-                </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 chart-container">
+                <h3>🌎 出发地和目的地平均价格（Top 15 路线）</h3>
+                <canvas id="routeChart"></canvas>
             </div>
-            
-            <div class="row">
-                <div class="col-12 chart-container">
-                    <h3>🌎 出发地和目的地平均价格</h3>
-                    <img src="data:image/png;base64,{{ plots.source_dest_prices }}" class="chart-img" alt="出发地-目的地价格">
-                </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 chart-container">
+                <h3>🧳 不同经停次数的平均航班价格</h3>
+                <canvas id="stopsChart"></canvas>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6 chart-container">
-                    <h3>🧳 不同经停次数的平均航班价格</h3>
-                    <img src="data:image/png;base64,{{ plots.stops_prices }}" class="chart-img" alt="经停次数价格">
-                </div>
-                <div class="col-md-6 chart-container">
-                    <h3>💰 航班价格分布</h3>
-                    <img src="data:image/png;base64,{{ plots.price_distribution }}" class="chart-img" alt="价格分布">
-                </div>
+            <div class="col-md-6 chart-container">
+                <h3>💰 航班价格分布</h3>
+                <canvas id="distChart"></canvas>
             </div>
-        {% endif %}
+        </div>
         
         <div class="row mt-5">
             <div class="col-12 text-center">
@@ -92,14 +85,53 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function loadData() {
+            const res = await fetch('/analysis/data');
+            const data = await res.json();
+            const airlineLabels = data.airline_prices.map(x => x.airline);
+            const airlineValues = data.airline_prices.map(x => x.avg_price);
+            new Chart(document.getElementById('airlineChart'), {
+                type: 'bar',
+                data: { labels: airlineLabels, datasets: [{ label: '平均价格', data: airlineValues, backgroundColor: '#4e79a7' }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 0 } } } }
+            });
+            const monthLabels = Array.from({length: 12}, (_, i) => 'M' + (i + 1));
+            const monthMap = new Map(data.monthly_prices.map(x => [x.month, x.avg_price]));
+            const monthValues = Array.from({length: 12}, (_, i) => monthMap.get(i + 1) ?? 0);
+            new Chart(document.getElementById('monthlyChart'), {
+                type: 'line',
+                data: { labels: monthLabels, datasets: [{ label: '平均价格', data: monthValues, borderColor: '#f28e2b', backgroundColor: 'rgba(242,142,43,0.2)', fill: true }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+            const routeLabels = data.source_dest_prices.map(x => x.route);
+            const routeValues = data.source_dest_prices.map(x => x.avg_price);
+            new Chart(document.getElementById('routeChart'), {
+                type: 'bar',
+                data: { labels: routeLabels, datasets: [{ label: '平均价格', data: routeValues, backgroundColor: '#59a14f' }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 60 } } } }
+            });
+            const stopsLabels = data.stops_prices.map(x => String(x.stops));
+            const stopsValues = data.stops_prices.map(x => x.avg_price);
+            new Chart(document.getElementById('stopsChart'), {
+                type: 'bar',
+                data: { labels: stopsLabels, datasets: [{ label: '平均价格', data: stopsValues, backgroundColor: '#e15759' }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+            const bins = data.price_distribution.bins;
+            const counts = data.price_distribution.counts;
+            const binLabels = [];
+            for (let i = 0; i < bins.length - 1; i++) {
+                binLabels.push(`${Math.round(bins[i])}-${Math.round(bins[i+1])}`);
+            }
+            new Chart(document.getElementById('distChart'), {
+                type: 'bar',
+                data: { labels: binLabels, datasets: [{ label: '频数', data: counts, backgroundColor: '#b6992d' }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: true, maxRotation: 60 } } } }
+            });
+        }
+        loadData();
+    </script>
 </body>
 </html>

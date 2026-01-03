@@ -842,116 +842,132 @@ def predict():
 @app.route("/analysis")
 @cross_origin()
 def analysis():
-    # 读取训练数据
     try:
-        # 由于我们没有原始数据文件，这里我们生成一些示例数据用于演示
-        np.random.seed(42)
-        n_samples = 1000
-        
-        # 生成示例数据
-        airlines = ['IndiGo', 'Air India', 'Jet Airways', 'SpiceJet', 'Multiple carriers', 'GoAir', 'Vistara']
-        sources = ['Delhi', 'Kolkata', 'Mumbai', 'Chennai']
-        destinations = ['Cochin', 'Banglore', 'Delhi', 'New Delhi', 'Hyderabad']
-        
-        data = {
-            'Airline': np.random.choice(airlines, n_samples),
-            'Source': np.random.choice(sources, n_samples),
-            'Destination': np.random.choice(destinations, n_samples),
-            'Total_Stops': np.random.randint(0, 4, n_samples),
-            'Price': np.random.randint(2000, 20000, n_samples),
-            'Journey_month': np.random.randint(1, 13, n_samples)
-        }
-        
-        df = pd.DataFrame(data)
-        
-        # 生成图表
-        plots = {}
-        
-        # 航空公司价格分布
-        plt.figure(figsize=(10, 6))
-        airline_prices = df.groupby('Airline')['Price'].mean().sort_values(ascending=False)
-        airline_prices.plot(kind='bar')
-        plt.title('Average Flight Prices by Airline')
-        plt.xlabel('Airline')
-        plt.ylabel('Average Price')
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        
-        img = BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url1 = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        plots['airline_prices'] = plot_url1
-        
-        # 月份价格趋势
-        plt.figure(figsize=(10, 6))
-        monthly_prices = df.groupby('Journey_month')['Price'].mean()
-        monthly_prices.plot(kind='line', marker='o')
-        plt.title('Average Flight Prices by Month')
-        plt.xlabel('Month')
-        plt.ylabel('Average Price')
-        plt.xticks(range(1, 13))
-        plt.grid(True)
-        plt.tight_layout()
-        
-        img = BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url2 = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        plots['monthly_prices'] = plot_url2
-        
-        # 出发地和目的地分析
-        plt.figure(figsize=(12, 6))
-        source_dest_prices = df.groupby(['Source', 'Destination'])['Price'].mean().unstack()
-        sns.heatmap(source_dest_prices, annot=True, fmt='.0f', cmap='YlOrRd')
-        plt.title('Average Prices by Source and Destination')
-        plt.tight_layout()
-        
-        img = BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url3 = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        plots['source_dest_prices'] = plot_url3
-        
-        # 停靠站数与价格的关系
-        plt.figure(figsize=(10, 6))
-        stops_prices = df.groupby('Total_Stops')['Price'].mean()
-        stops_prices.plot(kind='bar')
-        plt.title('Average Flight Prices by Number of Stops')
-        plt.xlabel('Number of Stops')
-        plt.ylabel('Average Price')
-        plt.xticks(rotation=0)
-        plt.tight_layout()
-        
-        img = BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url4 = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        plots['stops_prices'] = plot_url4
-        
-        # 价格分布直方图
-        plt.figure(figsize=(10, 6))
-        plt.hist(df['Price'], bins=30, edgecolor='black')
-        plt.title('Distribution of Flight Prices')
-        plt.xlabel('Price')
-        plt.ylabel('Frequency')
-        plt.tight_layout()
-        
-        img = BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url5 = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        plots['price_distribution'] = plot_url5
-        
-        return render_template('analysis.html', plots=plots)
-    
+        return render_template('analysis.html')
     except Exception as e:
         return render_template('analysis.html', error=str(e))
+
+@app.route("/analysis/data")
+@cross_origin()
+def analysis_data():
+    try:
+        import os
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_path = os.path.join(base_dir, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices', 'Data_Train.xlsx')
+        df = pd.read_excel(data_path)
+        df.columns = df.columns.str.strip()
+        def pick(*names):
+            for n in names:
+                if n in df.columns:
+                    return n
+            return None
+        col_airline = pick('Airline', 'airline')
+        col_source = pick('Source', 'source')
+        col_destination = pick('Destination', 'destination')
+        col_stops = pick('Total_Stops', 'Total Stops', 'total_stops')
+        col_price = pick('Price', 'price')
+        col_date = pick('Date_of_Journey', 'Journey_date', 'Date')
+        col_dep = pick('Dep_Time', 'Departure_Time', 'Dep_Time_full')
+        if col_date is not None:
+            df['_month'] = pd.to_datetime(df[col_date], errors='coerce', dayfirst=True).dt.month
+        elif col_dep is not None:
+            df['_month'] = pd.to_datetime(df[col_dep], errors='coerce', dayfirst=True).dt.month
+        else:
+            df['_month'] = np.nan
+        if col_price is not None:
+            df['_price'] = pd.to_numeric(df[col_price], errors='coerce')
+        else:
+            df['_price'] = np.nan
+        airline_stats = []
+        if col_airline is not None and df['_price'].notna().any():
+            grp = df.dropna(subset=['_price']).groupby(col_airline)['_price'].mean().sort_values(ascending=False)
+            airline_stats = [{'airline': k, 'avg_price': float(v)} for k, v in grp.items()]
+        monthly_stats = []
+        for m in range(1, 13):
+            sel = df[(df['_month'] == m) & (df['_price'].notna())]
+            avg = float(sel['_price'].mean()) if not sel.empty else 0.0
+            monthly_stats.append({'month': m, 'avg_price': avg})
+        pair_stats = []
+        if col_source is not None and col_destination is not None and df['_price'].notna().any():
+            df['_route'] = df[col_source].astype(str) + ' -> ' + df[col_destination].astype(str)
+            grp = df.dropna(subset=['_price']).groupby('_route')['_price'].mean().sort_values(ascending=False).head(15)
+            pair_stats = [{'route': k, 'avg_price': float(v)} for k, v in grp.items()]
+        stops_stats = []
+        if col_stops is not None and df['_price'].notna().any():
+            grp = df.dropna(subset=['_price']).groupby(col_stops)['_price'].mean().sort_values()
+            stops_stats = [{'stops': int(k), 'avg_price': float(v)} for k, v in grp.items()]
+        price_series = df['_price'].dropna()
+        if not price_series.empty:
+            hist_counts, bin_edges = np.histogram(price_series, bins=20)
+            price_dist = {'bins': [float(x) for x in bin_edges], 'counts': [int(x) for x in hist_counts]}
+        else:
+            price_dist = {'bins': [], 'counts': []}
+        return jsonify({
+            'airline_prices': airline_stats,
+            'monthly_prices': monthly_stats,
+            'source_dest_prices': pair_stats,
+            'stops_prices': stops_stats,
+            'price_distribution': price_dist
+        })
+    except Exception as e:
+        try:
+            flights = Flight.query.all()
+            prices = [float(f.price) for f in flights if f.price is not None]
+            airline_map = {}
+            for f in flights:
+                if f.price is None:
+                    continue
+                k = f.airline
+                airline_map.setdefault(k, []).append(float(f.price))
+            airline_stats = [{'airline': k, 'avg_price': float(np.mean(v))} for k, v in airline_map.items()]
+            airline_stats.sort(key=lambda x: x['avg_price'], reverse=True)
+            month_map = {}
+            for f in flights:
+                if f.price is None or f.departure_time is None:
+                    continue
+                m = f.departure_time.month
+                month_map.setdefault(m, []).append(float(f.price))
+            monthly_stats = []
+            for m in range(1, 13):
+                if m in month_map:
+                    monthly_stats.append({'month': m, 'avg_price': float(np.mean(month_map[m]))})
+                else:
+                    monthly_stats.append({'month': m, 'avg_price': 0.0})
+            pair_map = {}
+            for f in flights:
+                if f.price is None:
+                    continue
+                label = f"{f.source} -> {f.destination}"
+                pair_map.setdefault(label, []).append(float(f.price))
+            pair_stats = [{'route': k, 'avg_price': float(np.mean(v))} for k, v in pair_map.items()]
+            pair_stats.sort(key=lambda x: x['avg_price'], reverse=True)
+            pair_stats = pair_stats[:15]
+            stops_map = {}
+            for f in flights:
+                if f.price is None:
+                    continue
+                s = int(f.total_stops)
+                stops_map.setdefault(s, []).append(float(f.price))
+            stops_stats = [{'stops': s, 'avg_price': float(np.mean(v))} for s, v in sorted(stops_map.items())]
+            if prices:
+                bins = 20
+                hist_counts, bin_edges = np.histogram(prices, bins=bins)
+                price_dist = {
+                    'bins': [float(x) for x in bin_edges],
+                    'counts': [int(x) for x in hist_counts]
+                }
+            else:
+                price_dist = {'bins': [], 'counts': []}
+            return jsonify({
+                'airline_prices': airline_stats,
+                'monthly_prices': monthly_stats,
+                'source_dest_prices': pair_stats,
+                'stops_prices': stops_stats,
+                'price_distribution': price_dist,
+                'warning': str(e)
+            }), 200
+        except Exception as inner:
+            return jsonify({'error': str(e), 'fallback_error': str(inner)}), 500
 
 
 @app.route("/model_analysis")
