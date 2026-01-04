@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS flights (
     destination VARCHAR(100) NOT NULL,
     departure_time DATETIME NOT NULL,
     arrival_time DATETIME NOT NULL,
-    total_stops INT NOT NULL,
+    total_stops INT NULL,
+    aircraft_model VARCHAR(200) NULL,
     price DECIMAL(10, 2),
     user_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -52,3 +53,6 @@ INSERT INTO users (username, email, password_hash, role) VALUES
 -- ('IndiGo', 'Delhi', 'Bangalore', '2025-12-15 08:00:00', '2025-12-15 10:30:00', 0, 4500.00, 2),
 -- ('Air India', 'Mumbai', 'Chennai', '2025-12-16 14:00:00', '2025-12-16 16:45:00', 1, 7200.50, 2),
 -- ('Jet Airways', 'Kolkata', 'Delhi', '2025-12-17 19:30:00', '2025-12-17 22:15:00', 0, 8900.75, NULL);
+-- Migration helper for existing databases:
+-- ALTER TABLE flights MODIFY total_stops INT NULL;
+-- ALTER TABLE flights ADD COLUMN aircraft_model VARCHAR(200) NULL;

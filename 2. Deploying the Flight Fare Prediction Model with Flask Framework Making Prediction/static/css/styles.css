@@ -79,6 +79,18 @@ select.form-control {
     padding-right: 30px; /* 为下拉箭头留出空间 */
 }
 
+/* 统一修复下拉框文字遮挡/裁剪问题（含 Bootstrap 的 custom-select） */
+select.form-control,
+.custom-select {
+    height: auto !important;
+    min-height: 45px;
+    line-height: 1.6;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 2.5rem; /* 避免箭头覆盖文字 */
+    box-sizing: border-box;
+}
+
 /* 优化下拉菜单选项显示 */
 select.form-control option {
     padding: 10px;

@@ -18,7 +18,7 @@ from io import BytesIO
 import base64
 import warnings
 from datetime import datetime
-from models import db, Flight, Prediction, User
+from models import db, Flight, Prediction, User, TicketData
 from config import config
 from werkzeug.security import generate_password_hash, check_password_hash
 warnings.filterwarnings('ignore')
@@ -33,10 +33,80 @@ app.config.from_object(config['development'])
 # Initialize database
 db.init_app(app)
 
+# Currency conversion
+app.config['INR_TO_CNY'] = float(os.environ.get('INR_TO_CNY', '0.086'))
 # Create tables
 with app.app_context():
     db.create_all()
 
+# CSV import helper
+def import_csv_to_db(limit=None):
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices')
+        csv_path = os.path.join(data_dir, '机票数据.csv')
+        df = None
+        if os.path.exists(csv_path):
+            for enc in ['utf-8-sig', 'utf-8', 'gbk']:
+                try:
+                    df = pd.read_csv(csv_path, encoding=enc)
+                    break
+                except Exception:
+                    continue
+            if df is None:
+                df = pd.read_csv(csv_path)
+        else:
+            return {'success': False, 'message': 'CSV file not found'}
+        df.columns = df.columns.str.strip()
+        def pick(*names):
+            for n in names:
+                if n in df.columns:
+                    return n
+            return None
+        c_source = pick('出发城市','Source')
+        c_dest = pick('到达城市','Destination')
+        c_date = pick('出发日期','Date_of_Journey')
+        c_airline = pick('航空公司','Airline')
+        c_model = pick('客机机型','Aircraft_Model')
+        c_dep_air = pick('出发机场')
+        c_arr_air = pick('到达机场')
+        c_dep_time = pick('出发时间','Dep_Time')
+        c_arr_time = pick('抵达时间','Arrival_Time')
+        c_cabin = pick('客舱类型')
+        c_price = pick('机票价格','Price')
+        rows = df if limit is None else df.head(limit)
+        objs = []
+        for _, r in rows.iterrows():
+            raw_price = str(r[c_price]) if c_price else ''
+            cleaned = ''.join([ch for ch in raw_price if (ch.isdigit() or ch=='.')])
+            price_num = None
+            try:
+                price_num = float(cleaned) if cleaned!='' else None
+            except Exception:
+                price_num = None
+            obj = TicketData(
+                source_city=str(r[c_source]) if c_source else None,
+                destination_city=str(r[c_dest]) if c_dest else None,
+                departure_date=str(r[c_date]) if c_date else None,
+                airline=str(r[c_airline]) if c_airline else None,
+                aircraft_model=str(r[c_model]) if c_model else None,
+                departure_airport=str(r[c_dep_air]) if c_dep_air else None,
+                arrival_airport=str(r[c_arr_air]) if c_arr_air else None,
+                departure_time=str(r[c_dep_time]) if c_dep_time else None,
+                arrival_time=str(r[c_arr_time]) if c_arr_time else None,
+                cabin_type=str(r[c_cabin]) if c_cabin else None,
+                price=price_num,
+                raw_price_text=raw_price
+            )
+            objs.append(obj)
+        if len(objs) == 0:
+            return {'success': False, 'message': 'No rows to import'}
+        db.session.bulk_save_objects(objs)
+        db.session.commit()
+        return {'success': True, 'imported': len(objs)}
+    except Exception as e:
+        db.session.rollback()
+        return {'success': False, 'message': str(e)}
 # 设置密钥
 app.secret_key = 'your-secret-key-here'
 
@@ -107,12 +177,37 @@ try:
     # The data file is in the sibling directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
-    data_path = os.path.join(project_root, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices', 'Data_Train.xlsx')
-    
-    if os.path.exists(data_path):
-        # We need openpyxl or xlrd to read excel
+    data_dir = os.path.join(project_root, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices')
+    csv_path = os.path.join(data_dir, '机票数据.csv')
+    xlsx_path = os.path.join(data_dir, 'Data_Train.xlsx')
+    df_train = None
+    if os.path.exists(csv_path):
+        for enc in ['utf-8-sig', 'utf-8', 'gbk']:
+            try:
+                df_train = pd.read_csv(csv_path, encoding=enc)
+                break
+            except Exception:
+                continue
+        if df_train is None:
+            df_train = pd.read_csv(csv_path)
+        df_train.columns = df_train.columns.str.strip()
+        price_col = 'Price' if 'Price' in df_train.columns else ('机票价格' if '机票价格' in df_train.columns else None)
+        if price_col:
+            cleaned = df_train[price_col].astype(str).str.replace(r'[^0-9\.]', '', regex=True)
+            ps = pd.to_numeric(cleaned, errors='coerce').dropna()
+            if not ps.empty:
+                price_stats = {
+                    'min': float(ps.min()),
+                    'max': float(ps.max()),
+                    'mean': float(ps.mean()),
+                    '25%': float(ps.quantile(0.25)),
+                    '50%': float(ps.quantile(0.50)),
+                    '75%': float(ps.quantile(0.75))
+                }
+                print("Price statistics loaded from 机票数据.csv")
+    elif os.path.exists(xlsx_path):
         try:
-            df_train = pd.read_excel(data_path)
+            df_train = pd.read_excel(xlsx_path)
             price_stats = {
                 'min': float(df_train['Price'].min()),
                 'max': float(df_train['Price'].max()),
@@ -123,18 +218,74 @@ try:
             }
             print("Price statistics loaded from Data_Train.xlsx")
         except ImportError:
-             print("Missing optional dependency (openpyxl/xlrd) to read Excel file. Using default stats.")
+            print("Missing optional dependency (openpyxl/xlrd) to read Excel file. Using default stats.")
 except Exception as e:
     print(f"Could not load price statistics from file, using defaults: {e}")
+
+# Prepare dropdown options from CSV if available
+dropdown_options = {
+    'sources': ['Delhi', 'Kolkata', 'Mumbai', 'Chennai'],
+    'destinations': ['Cochin', 'Delhi', 'New Delhi', 'Hyderabad', 'Kolkata'],
+    'airlines': ['Jet Airways', 'IndiGo', 'Air India', 'Multiple carriers', 'SpiceJet',
+                 'Vistara', 'Air Asia', 'GoAir', 'Multiple carriers Premium economy',
+                 'Jet Airways Business', 'Vistara Premium economy', 'Trujet'],
+    'aircraft_models': []
+}
+try:
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices')
+    csv_path = os.path.join(data_dir, '机票数据.csv')
+    if os.path.exists(csv_path):
+        df_opts = None
+        for enc in ['utf-8-sig', 'utf-8', 'gbk']:
+            try:
+                df_opts = pd.read_csv(csv_path, encoding=enc)
+                break
+            except Exception:
+                continue
+        if df_opts is None:
+            df_opts = pd.read_csv(csv_path)
+        df_opts.columns = df_opts.columns.str.strip()
+        def uniques(col_names):
+            for n in col_names:
+                if n in df_opts.columns:
+                    vals = df_opts[n].dropna().astype(str).str.strip()
+                    return sorted(list(dict.fromkeys(vals.tolist())))
+            return None
+        sources = uniques(['出发城市', 'Source'])
+        destinations = uniques(['到达城市', 'Destination'])
+        airlines = uniques(['航空公司', 'Airline'])
+        aircraft_models = uniques(['客机机型', 'Aircraft_Model'])
+        if sources and len(sources) > 0:
+            dropdown_options['sources'] = sources
+        if destinations and len(destinations) > 0:
+            dropdown_options['destinations'] = destinations
+        if airlines and len(airlines) > 0:
+            dropdown_options['airlines'] = airlines
+        if aircraft_models and len(aircraft_models) > 0:
+            dropdown_options['aircraft_models'] = aircraft_models
+        print("Dropdown options loaded from 机票数据.csv")
+except Exception as e:
+    print(f"Could not load dropdown options from CSV: {e}")
 
 
 @app.route("/")
 @cross_origin()
 def home():
     if model is None:
-        return render_template("home.html", prediction_text="Model not loaded. The application is running, but predictions cannot be made. This is likely due to a version incompatibility with the trained model. Please contact the administrator to retrain the model.")
-    return render_template("home.html")
+        return render_template("home.html", 
+                               prediction_text="Model not loaded. The application is running, but predictions cannot be made. This is likely due to a version incompatibility with the trained model. Please contact the administrator to retrain the model.",
+                               dropdown_options=dropdown_options)
+    return render_template("home.html", dropdown_options=dropdown_options)
 
+@app.route('/admin/import_csv')
+@admin_required
+@cross_origin()
+def import_csv_route():
+    res = import_csv_to_db()
+    if res.get('success'):
+        return jsonify(res)
+    return jsonify(res), 400
 
 @app.route('/login', methods=['GET', 'POST'])
 @cross_origin()
@@ -211,12 +362,12 @@ def register():
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template("home.html", prediction_text="Page not found."), 404
+    return render_template("home.html", prediction_text="Page not found.", dropdown_options=dropdown_options), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
-    return render_template("home.html", prediction_text="Internal server error. Please try again."), 500
+    return render_template("home.html", prediction_text="Internal server error. Please try again.", dropdown_options=dropdown_options), 500
 
 
 @app.route('/flights')
@@ -239,6 +390,7 @@ def list_flights():
         distinct_airlines = [r.airline for r in query.with_entities(Flight.airline).distinct().order_by(Flight.airline).all()]
         distinct_sources = [r.source for r in query.with_entities(Flight.source).distinct().order_by(Flight.source).all()]
         distinct_destinations = [r.destination for r in query.with_entities(Flight.destination).distinct().order_by(Flight.destination).all()]
+        distinct_aircraft_models = [r.aircraft_model for r in query.with_entities(Flight.aircraft_model).distinct().order_by(Flight.aircraft_model).all()]
             
         # Filtering
         airline = request.args.get('airline')
@@ -262,9 +414,9 @@ def list_flights():
         if arrival_time:
             query = query.filter(db.func.date(Flight.arrival_time) == arrival_time)
             
-        total_stops = request.args.get('total_stops')
-        if total_stops is not None and total_stops != '':
-            query = query.filter(Flight.total_stops == int(total_stops))
+        aircraft_model = request.args.get('aircraft_model')
+        if aircraft_model:
+            query = query.filter(Flight.aircraft_model.ilike(f"%{aircraft_model}%"))
 
         # Sorting
         sort_by = request.args.get('sort_by')
@@ -297,7 +449,8 @@ def list_flights():
                              params=params,
                              airlines=distinct_airlines,
                              sources=distinct_sources,
-                             destinations=distinct_destinations)
+                             destinations=distinct_destinations,
+                             aircraft_models=distinct_aircraft_models)
     except Exception as e:
         return render_template('flights.html', error=str(e), flights=[], user=User.query.get(session['user_id']))
 
@@ -315,7 +468,7 @@ def add_flight():
             destination = request.form.get('destination')
             departure_time = datetime.strptime(request.form.get('departure_time'), '%Y-%m-%dT%H:%M')
             arrival_time = datetime.strptime(request.form.get('arrival_time'), '%Y-%m-%dT%H:%M')
-            total_stops = int(request.form.get('total_stops'))
+            aircraft_model = request.form.get('aircraft_model')
             price = float(request.form.get('price')) if request.form.get('price') else None
             
             # Create new flight
@@ -325,7 +478,8 @@ def add_flight():
                 destination=destination,
                 departure_time=departure_time,
                 arrival_time=arrival_time,
-                total_stops=total_stops,
+                total_stops=None,
+                aircraft_model=aircraft_model,
                 price=price,
                 user_id=session['user_id']  # 关联到当前用户
             )
@@ -339,7 +493,11 @@ def add_flight():
             db.session.rollback()
             return jsonify({'success': False, 'message': f'Error adding flight: {str(e)}'}), 400
     
-    return render_template('add_flight.html')
+    return render_template('add_flight.html',
+                           aircraft_models=dropdown_options.get('aircraft_models', []),
+                           airlines=dropdown_options.get('airlines', []),
+                           sources=dropdown_options.get('sources', []),
+                           destinations=dropdown_options.get('destinations', []))
 
 
 @app.route('/flights/edit/<int:id>', methods=['GET', 'POST'])
@@ -364,7 +522,7 @@ def edit_flight(id):
             flight.destination = request.form.get('destination')
             flight.departure_time = datetime.strptime(request.form.get('departure_time'), '%Y-%m-%dT%H:%M')
             flight.arrival_time = datetime.strptime(request.form.get('arrival_time'), '%Y-%m-%dT%H:%M')
-            flight.total_stops = int(request.form.get('total_stops'))
+            flight.aircraft_model = request.form.get('aircraft_model')
             flight.price = float(request.form.get('price')) if request.form.get('price') else None
             
             # Commit changes
@@ -375,7 +533,12 @@ def edit_flight(id):
             db.session.rollback()
             return jsonify({'success': False, 'message': f'Error updating flight: {str(e)}'}), 400
     
-    return render_template('edit_flight.html', flight=flight.to_dict())
+    return render_template('edit_flight.html',
+                           flight=flight.to_dict(),
+                           aircraft_models=dropdown_options.get('aircraft_models', []),
+                           airlines=dropdown_options.get('airlines', []),
+                           sources=dropdown_options.get('sources', []),
+                           destinations=dropdown_options.get('destinations', []))
 
 
 @app.route('/flights/delete/<int:id>', methods=['POST'])
@@ -422,361 +585,67 @@ def predict():
     
     if request.method == "POST":
         try:
-            # Date_of_Journey
-            date_dep = request.form["Dep_Time"]
-            Journey_day = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").day)
-            Journey_month = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").month)
-            # print("Journey Date : ",Journey_day, Journey_month)
+            dep_str = request.form["Dep_Time"]
+            arr_str = request.form["Arrival_Time"]
+            dep_dt = pd.to_datetime(dep_str, format="%Y-%m-%dT%H:%M")
+            arr_dt = pd.to_datetime(arr_str, format="%Y-%m-%dT%H:%M")
+            Journey_day = int(dep_dt.day)
+            Journey_month = int(dep_dt.month)
+            Dep_hour = int(dep_dt.hour)
+            Dep_min = int(dep_dt.minute)
+            Arrival_hour = int(arr_dt.hour)
+            Arrival_min = int(arr_dt.minute)
+            dep_total_min = Dep_hour * 60 + Dep_min
+            arr_total_min = Arrival_hour * 60 + Arrival_min
+            delta_min = arr_total_min - dep_total_min
+            if delta_min < 0:
+                delta_min += 24 * 60
+            dur_hour = int(delta_min // 60)
+            dur_min = int(delta_min % 60)
+        except Exception:
+            return render_template('home.html', prediction_text="Invalid date/time format. Please check your inputs.", dropdown_options=dropdown_options)
 
-            # Departure
-            Dep_hour = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").hour)
-            Dep_min = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").minute)
-            # print("Departure : ",Dep_hour, Dep_min)
+        airline = request.form.get('airline', '')
+        Source = request.form.get('Source', '')
+        Destination = request.form.get('Destination', '')
+        aircraft_model = request.form.get('aircraft_model', '')
+        Total_stops = 0
+        if not airline or not Source or not Destination or not aircraft_model:
+            form_data = {
+                'Dep_Time': dep_str,
+                'Arrival_Time': arr_str,
+                'Source': Source,
+                'Destination': Destination,
+                'airline': airline,
+                'aircraft_model': aircraft_model
+            }
+            return render_template('home.html',
+                                   prediction_text="请输入完整的出发/到达时间、城市、航空公司与客机类型。",
+                                   form_data=form_data,
+                                   dropdown_options=dropdown_options)
 
-            # Arrival
-            date_arr = request.form["Arrival_Time"]
-            Arrival_hour = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").hour)
-            Arrival_min = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").minute)
-            # print("Arrival : ", Arrival_hour, Arrival_min)
-
-            # Check if arrival time is later than departure time
-            dep_datetime = pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M")
-            arr_datetime = pd.to_datetime(date_arr, format="%Y-%m-%dT%H:%M")
-            
-            if arr_datetime <= dep_datetime:
-                return render_template('home.html', 
-                                       prediction_text="Error: Arrival time must be later than departure time.",
-                                       form_data=request.form)
-
-            # Duration
-            dur_hour = abs(Arrival_hour - Dep_hour)
-            dur_min = abs(Arrival_min - Dep_min)
-            # print("Duration : ", dur_hour, dur_min)
-        except Exception as e:
-            return render_template('home.html', prediction_text="Invalid date/time format. Please check your inputs.")
-
-        # Total Stops
-        Total_stops = int(request.form["stops"])
-        # print(Total_stops)
-
-        # Airline
-        # AIR ASIA = 0 (not in column)
-        airline=request.form['airline']
-        if(airline=='Jet Airways'):
-            Jet_Airways = 1
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0 
-
-        elif (airline=='IndiGo'):
-            Jet_Airways = 0
-            IndiGo = 1
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0 
-
-        elif (airline=='Air India'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 1
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0 
-            
-        elif (airline=='Multiple carriers'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 1
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0 
-            
-        elif (airline=='SpiceJet'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 1
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0 
-            
-        elif (airline=='Vistara'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 1
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline=='GoAir'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 1
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline=='Multiple carriers Premium economy'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 1
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline=='Jet Airways Business'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 1
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline=='Vistara Premium economy'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 1
-            Trujet = 0
-            
-        elif (airline=='Trujet'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 1
-
-        else:
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        # print(Jet_Airways,
-        #     IndiGo,
-        #     Air_India,
-        #     Multiple_carriers,
-        #     SpiceJet,
-        #     Vistara,
-        #     GoAir,
-        #     Multiple_carriers_Premium_economy,
-        #     Jet_Airways_Business,
-        #     Vistara_Premium_economy,
-        #     Trujet)
-
-        # Source
-        # Banglore = 0 (not in column)
-        Source = request.form["Source"]
-        if (Source == 'Delhi'):
-            s_Delhi = 1
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 0
-
-        elif (Source == 'Kolkata'):
-            s_Delhi = 0
-            s_Kolkata = 1
-            s_Mumbai = 0
-            s_Chennai = 0
-
-        elif (Source == 'Mumbai'):
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 1
-            s_Chennai = 0
-
-        elif (Source == 'Chennai'):
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 1
-
-        else:
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 0
-
-        # print(s_Delhi,
-        #     s_Kolkata,
-        #     s_Mumbai,
-        #     s_Chennai)
-
-        # Destination
-        # Banglore = 0 (not in column)
-        Destination = request.form["Destination"]
-        if (Destination == 'Cochin'):
-            d_Cochin = 1
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-        
-        elif (Destination == 'Delhi'):
-            d_Cochin = 0
-            d_Delhi = 1
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        elif (Destination == 'New_Delhi'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 1
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        elif (Destination == 'Hyderabad'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 1
-            d_Kolkata = 0
-
-        elif (Destination == 'Kolkata'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 1
-
-        else:
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        # print(
-        #     d_Cochin,
-        #     d_Delhi,
-        #     d_New_Delhi,
-        #     d_Hyderabad,
-        #     d_Kolkata
-        # )
-        
-
-    #     ['Total_Stops', 'Journey_day', 'Journey_month', 'Dep_hour',
-    #    'Dep_min', 'Arrival_hour', 'Arrival_min', 'Duration_hours',
-    #    'Duration_mins', 'Airline_Air India', 'Airline_GoAir', 'Airline_IndiGo',
-    #    'Airline_Jet Airways', 'Airline_Jet Airways Business',
-    #    'Airline_Multiple carriers',
-    #    'Airline_Multiple carriers Premium economy', 'Airline_SpiceJet',
-    #    'Airline_Trujet', 'Airline_Vistara', 'Airline_Vistara Premium economy',
-    #    'Source_Chennai', 'Source_Delhi', 'Source_Kolkata', 'Source_Mumbai',
-    #    'Destination_Cochin', 'Destination_Delhi', 'Destination_Hyderabad',
-    #    'Destination_Kolkata', 'Destination_New Delhi']
-        
         try:
-            prediction=model.predict([[
-                Total_stops,
-                Journey_day,
-                Journey_month,
-                Dep_hour,
-                Dep_min,
-                Arrival_hour,
-                Arrival_min,
-                dur_hour,
-                dur_min,
-                Air_India,
-                GoAir,
-                IndiGo,
-                Jet_Airways,
-                Jet_Airways_Business,
-                Multiple_carriers,
-                Multiple_carriers_Premium_economy,
-                SpiceJet,
-                Trujet,
-                Vistara,
-                Vistara_Premium_economy,
-                s_Chennai,
-                s_Delhi,
-                s_Kolkata,
-                s_Mumbai,
-                d_Cochin,
-                d_Delhi,
-                d_Hyderabad,
-                d_Kolkata,
-                d_New_Delhi
-            ]])
+            df = pd.DataFrame([{
+                "Journey_day": Journey_day,
+                "Journey_month": Journey_month,
+                "Dep_hour": Dep_hour,
+                "Dep_min": Dep_min,
+                "Arrival_hour": Arrival_hour,
+                "Arrival_min": Arrival_min,
+                "Duration_hours": dur_hour,
+                "Duration_mins": dur_min,
+                "Airline": airline,
+                "Source": Source,
+                "Destination": Destination,
+                "Aircraft_Model": aircraft_model
+            }])
+            pred_inr = float(model.predict(df)[0])
+            price_cny = round(pred_inr * app.config.get('INR_TO_CNY', 0.086), 2)
 
-            output=round(prediction[0],2)
-            
-            # Save the prediction to database
             try:
-                # Create a new flight record
-                dep_time = datetime.strptime(date_dep, "%Y-%m-%dT%H:%M")
-                arr_time = datetime.strptime(date_arr, "%Y-%m-%dT%H:%M")
-                
-                # 如果用户已登录，则关联到用户
+                dep_time = datetime.strptime(dep_str, "%Y-%m-%dT%H:%M")
+                arr_time = datetime.strptime(arr_str, "%Y-%m-%dT%H:%M")
                 user_id = session.get('user_id') if 'user_id' in session else None
-                
                 flight = Flight(
                     airline=airline,
                     source=Source,
@@ -784,54 +653,93 @@ def predict():
                     departure_time=dep_time,
                     arrival_time=arr_time,
                     total_stops=Total_stops,
-                    price=output,
+                    aircraft_model=aircraft_model,
+                    price=price_cny,
                     user_id=user_id
                 )
-                
                 db.session.add(flight)
-                db.session.flush()  # Get the flight ID without committing
-                
-                # Create prediction record
+                db.session.flush()
                 prediction_record = Prediction(
                     flight_id=flight.id,
-                    predicted_price=output
+                    predicted_price=price_cny
                 )
-                
                 db.session.add(prediction_record)
                 db.session.commit()
             except Exception as db_error:
                 db.session.rollback()
                 print(f"Database error: {db_error}")
 
-            # Prepare flight details to pass to template
             flight_details = {
                 'airline': airline,
                 'source': Source,
                 'destination': Destination,
-                'departure_time': date_dep.replace('T', ' '),
-                'arrival_time': date_arr.replace('T', ' '),
+                'departure_time': dep_str.replace('T', ' '),
+                'arrival_time': arr_str.replace('T', ' '),
                 'duration': f"{dur_hour}h {dur_min}m",
-                'stops': Total_stops
+                'aircraft_model': aircraft_model
             }
-
-            # Prepare form data to refill the form
             form_data = {
-                'Dep_Time': date_dep,
-                'Arrival_Time': date_arr,
+                'Dep_Time': dep_str,
+                'Arrival_Time': arr_str,
                 'Source': Source,
                 'Destination': Destination,
-                'stops': Total_stops,
-                'airline': airline
+                'airline': airline,
+                'aircraft_model': aircraft_model
             }
-
+            stats_cny = {k: round(v * app.config.get('INR_TO_CNY', 0.086), 2) for k, v in price_stats.items()}
             return render_template('home.html',
-                                   prediction_text="Your Flight price is Rs. {}".format(output),
-                                   prediction_value=output,
-                                   price_stats=price_stats,
+                                   prediction_text="您的航班价格为 ￥ {}".format(price_cny),
+                                   prediction_value=price_cny,
+                                   price_stats=stats_cny,
                                    flight_details=flight_details,
-                                   form_data=form_data)
+                                   form_data=form_data,
+                                   dropdown_options=dropdown_options)
         except Exception as e:
-            return render_template('home.html',prediction_text="Error occurred during prediction. Please check your inputs.")
+            msg = str(e)
+            if "ColumnTransformer" in msg and "_name_to_fitted_passthrough" in msg:
+                try:
+                    model_reload = pickle.load(open("flight_xgb.pkl", "rb"))
+                    pred_inr = float(model_reload.predict(df)[0])
+                    price_cny = round(pred_inr * app.config.get('INR_TO_CNY', 0.086), 2)
+                    flight_details = {
+                        'airline': airline,
+                        'source': Source,
+                        'destination': Destination,
+                        'departure_time': dep_str.replace('T', ' '),
+                        'arrival_time': arr_str.replace('T', ' '),
+                        'duration': f"{dur_hour}h {dur_min}m",
+                        'aircraft_model': aircraft_model
+                    }
+                    form_data = {
+                        'Dep_Time': dep_str,
+                        'Arrival_Time': arr_str,
+                        'Source': Source,
+                        'Destination': Destination,
+                        'airline': airline,
+                        'aircraft_model': aircraft_model
+                    }
+                    stats_cny = {k: round(v * app.config.get('INR_TO_CNY', 0.086), 2) for k, v in price_stats.items()}
+                    return render_template('home.html',
+                                           prediction_text="您的航班价格为 ￥ {}".format(price_cny),
+                                           prediction_value=price_cny,
+                                           price_stats=stats_cny,
+                                           flight_details=flight_details,
+                                           form_data=form_data,
+                                           dropdown_options=dropdown_options)
+                except Exception as e2:
+                    msg = str(e2)
+            form_data = {
+                'Dep_Time': dep_str,
+                'Arrival_Time': arr_str,
+                'Source': Source,
+                'Destination': Destination,
+                'airline': airline,
+                'aircraft_model': aircraft_model
+            }
+            return render_template('home.html',
+                                   prediction_text=f"预测失败，请检查输入。详情：{msg}",
+                                   form_data=form_data,
+                                   dropdown_options=dropdown_options)
 
 
     return render_template("home.html")
@@ -853,31 +761,101 @@ def analysis_data():
     try:
         import os
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        data_path = os.path.join(base_dir, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices', 'Data_Train.xlsx')
-        df = pd.read_excel(data_path)
+        data_dir = os.path.join(base_dir, '1. Flight Fare Prediction Project-1 Predicting and Analyzing Flight Ticket Prices')
+        csv_path = os.path.join(data_dir, '机票数据.csv')
+        xlsx_path = os.path.join(data_dir, 'Data_Train.xlsx')
+        if os.path.exists(csv_path):
+            for enc in ['utf-8-sig', 'utf-8', 'gbk']:
+                try:
+                    df = pd.read_csv(csv_path, encoding=enc)
+                    break
+                except Exception:
+                    continue
+            else:
+                df = pd.read_csv(csv_path)
+        elif os.path.exists(xlsx_path):
+            df = pd.read_excel(xlsx_path)
+        else:
+            df = pd.DataFrame()
         df.columns = df.columns.str.strip()
         def pick(*names):
             for n in names:
                 if n in df.columns:
                     return n
             return None
-        col_airline = pick('Airline', 'airline')
-        col_source = pick('Source', 'source')
-        col_destination = pick('Destination', 'destination')
-        col_stops = pick('Total_Stops', 'Total Stops', 'total_stops')
-        col_price = pick('Price', 'price')
-        col_date = pick('Date_of_Journey', 'Journey_date', 'Date')
-        col_dep = pick('Dep_Time', 'Departure_Time', 'Dep_Time_full')
+        col_airline = pick('Airline', 'airline', '航空公司')
+        col_source = pick('Source', 'source', '出发城市')
+        col_destination = pick('Destination', 'destination', '到达城市')
+        col_stops = pick('Total_Stops', 'Total Stops', 'total_stops', '经停次数')
+        col_price = pick('Price', 'price', '机票价格')
+        col_date = pick('Date_of_Journey', 'Journey_date', 'Date', '出发日期')
+        col_dep = pick('Dep_Time', 'Departure_Time', 'Dep_Time_full', '出发时间')
+        def extract_month(val):
+            import re
+            s = str(val).strip()
+            if s == '':
+                return np.nan
+            m = re.search(r'(\d{1,2})月', s)
+            if m:
+                mm = int(m.group(1))
+                if 1 <= mm <= 12:
+                    return mm
+            m2 = re.search(r'(\d{1,2})[\\-/](\d{1,2})', s)
+            if m2:
+                mm = int(m2.group(1))
+                dd = int(m2.group(2))
+                if 1 <= mm <= 12 and 1 <= dd <= 31:
+                    return mm
+            try:
+                dt = pd.to_datetime(s, errors='coerce', dayfirst=True)
+                if pd.notna(dt):
+                    return int(dt.month)
+            except Exception:
+                pass
+            return np.nan
         if col_date is not None:
-            df['_month'] = pd.to_datetime(df[col_date], errors='coerce', dayfirst=True).dt.month
+            df['_month'] = df[col_date].apply(extract_month)
         elif col_dep is not None:
-            df['_month'] = pd.to_datetime(df[col_dep], errors='coerce', dayfirst=True).dt.month
+            def dep_has_date(strval):
+                import re
+                t = str(strval).strip()
+                if t == '':
+                    return False
+                if re.search(r'\\d{4}[\\-/]\\d{1,2}[\\-/]\\d{1,2}', t):
+                    return True
+                if ('年' in t) and ('月' in t):
+                    return True
+                if '月' in t:
+                    return True
+                if re.search(r'\\d{1,2}[\\-/]\\d{1,2}', t):
+                    return True
+                return False
+            mask = df[col_dep].apply(dep_has_date)
+            df['_month'] = df[col_dep].where(mask).apply(extract_month)
         else:
             df['_month'] = np.nan
         if col_price is not None:
-            df['_price'] = pd.to_numeric(df[col_price], errors='coerce')
+            cleaned = df[col_price].astype(str).str.replace(r'[^0-9\.]', '', regex=True)
+            df['_price'] = pd.to_numeric(cleaned, errors='coerce')
         else:
             df['_price'] = np.nan
+        col_stops_raw = col_stops
+        if col_stops_raw is not None:
+            def parse_stops(v):
+                s = str(v).strip()
+                if s == '':
+                    return np.nan
+                try:
+                    return int(s)
+                except Exception:
+                    import re
+                    m = re.search(r'(\d+)', s)
+                    if m:
+                        return int(m.group(1))
+                    if s in ['直飞', 'Non-Stop', 'none', '无经停']:
+                        return 0
+                    return np.nan
+            df['_stops_parsed'] = df[col_stops_raw].apply(parse_stops)
         airline_stats = []
         if col_airline is not None and df['_price'].notna().any():
             grp = df.dropna(subset=['_price']).groupby(col_airline)['_price'].mean().sort_values(ascending=False)
@@ -894,8 +872,12 @@ def analysis_data():
             pair_stats = [{'route': k, 'avg_price': float(v)} for k, v in grp.items()]
         stops_stats = []
         if col_stops is not None and df['_price'].notna().any():
-            grp = df.dropna(subset=['_price']).groupby(col_stops)['_price'].mean().sort_values()
-            stops_stats = [{'stops': int(k), 'avg_price': float(v)} for k, v in grp.items()]
+            key = '_stops_parsed' if '_stops_parsed' in df.columns else col_stops
+            grp = df.dropna(subset=['_price']).dropna(subset=[key]).groupby(key)['_price'].mean().sort_values()
+            try:
+                stops_stats = [{'stops': int(k), 'avg_price': float(v)} for k, v in grp.items()]
+            except Exception:
+                stops_stats = [{'stops': str(k), 'avg_price': float(v)} for k, v in grp.items()]
         price_series = df['_price'].dropna()
         if not price_series.empty:
             hist_counts, bin_edges = np.histogram(price_series, bins=20)

@@ -12,7 +12,8 @@ class Flight(db.Model):
     destination = db.Column(db.String(100), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
-    total_stops = db.Column(db.Integer, nullable=False)
+    total_stops = db.Column(db.Integer, nullable=True)
+    aircraft_model = db.Column(db.String(200), nullable=True)
     price = db.Column(db.Numeric(precision=10, scale=2))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -35,6 +36,7 @@ class Flight(db.Model):
             'departure_time': self.departure_time.isoformat() if self.departure_time else None,
             'arrival_time': self.arrival_time.isoformat() if self.arrival_time else None,
             'total_stops': self.total_stops,
+            'aircraft_model': self.aircraft_model,
             'price': float(self.price) if self.price else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
@@ -90,3 +92,24 @@ class User(db.Model):
     # 检查用户是否为管理员
     def is_admin(self):
         return self.role == 'admin'
+
+class TicketData(db.Model):
+    __tablename__ = 'ticket_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    source_city = db.Column(db.String(100), nullable=True)
+    destination_city = db.Column(db.String(100), nullable=True)
+    departure_date = db.Column(db.String(50), nullable=True)
+    airline = db.Column(db.String(120), nullable=True)
+    aircraft_model = db.Column(db.String(300), nullable=True)
+    departure_airport = db.Column(db.String(200), nullable=True)
+    arrival_airport = db.Column(db.String(200), nullable=True)
+    departure_time = db.Column(db.String(50), nullable=True)
+    arrival_time = db.Column(db.String(50), nullable=True)
+    cabin_type = db.Column(db.String(120), nullable=True)
+    price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
+    raw_price_text = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<TicketData {self.airline} {self.source_city}->{self.destination_city} {self.departure_date}>'

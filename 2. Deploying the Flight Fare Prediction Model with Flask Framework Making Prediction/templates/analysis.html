@@ -36,6 +36,10 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="/">✈️ 航班价格预测</a>
             </div>
+            <div class="navbar-right" style="float: right; display: flex; align-items: center;">
+                <a href="/model_analysis" class="btn btn-success btn-sm" style="margin-right: 10px;">🧠 模型分析</a>
+                <a href="/" class="btn btn-primary btn-sm">🏠 返回预测</a>
+            </div>
         </div>
     </nav>
 
@@ -66,22 +70,13 @@
         </div>
         
         <div class="row">
-            <div class="col-md-6 chart-container">
-                <h3>🧳 不同经停次数的平均航班价格</h3>
-                <canvas id="stopsChart"></canvas>
-            </div>
-            <div class="col-md-6 chart-container">
+            <div class="col-12 chart-container">
                 <h3>💰 航班价格分布</h3>
                 <canvas id="distChart"></canvas>
             </div>
         </div>
         
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <a href="/model_analysis" class="btn btn-success btn-lg">🧠 模型分析</a>
-                <a href="/" class="btn btn-primary btn-lg">🏠 返回预测</a>
-            </div>
-        </div>
+        
     </div>
 
     <!-- JavaScript -->
@@ -111,13 +106,6 @@
                 type: 'bar',
                 data: { labels: routeLabels, datasets: [{ label: '平均价格', data: routeValues, backgroundColor: '#59a14f' }] },
                 options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 60 } } } }
-            });
-            const stopsLabels = data.stops_prices.map(x => String(x.stops));
-            const stopsValues = data.stops_prices.map(x => x.avg_price);
-            new Chart(document.getElementById('stopsChart'), {
-                type: 'bar',
-                data: { labels: stopsLabels, datasets: [{ label: '平均价格', data: stopsValues, backgroundColor: '#e15759' }] },
-                options: { responsive: true, plugins: { legend: { display: false } } }
             });
             const bins = data.price_distribution.bins;
             const counts = data.price_distribution.counts;

@@ -38,18 +38,9 @@
                                 <label for="airline">🛩️ 航空公司:</label>
                                 <select class="form-control" id="airline" name="airline" required>
                                     <option value="">选择航空公司</option>
-                                    <option value="Jet Airways">Jet Airways</option>
-                                    <option value="IndiGo">IndiGo</option>
-                                    <option value="Air India">Air India</option>
-                                    <option value="Multiple carriers">Multiple carriers</option>
-                                    <option value="SpiceJet">SpiceJet</option>
-                                    <option value="Vistara">Vistara</option>
-                                    <option value="Air Asia">Air Asia</option>
-                                    <option value="GoAir">GoAir</option>
-                                    <option value="Multiple carriers Premium economy">Multiple carriers Premium economy</option>
-                                    <option value="Jet Airways Business">Jet Airways Business</option>
-                                    <option value="Vistara Premium economy">Vistara Premium economy</option>
-                                    <option value="Trujet">Trujet</option>
+                                    {% for a in airlines %}
+                                    <option value="{{ a }}">{{ a }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
@@ -57,10 +48,9 @@
                                 <label for="source">🏙️ 出发地:</label>
                                 <select class="form-control" id="source" name="source" required>
                                     <option value="">选择出发地</option>
-                                    <option value="Delhi">Delhi</option>
-                                    <option value="Kolkata">Kolkata</option>
-                                    <option value="Mumbai">Mumbai</option>
-                                    <option value="Chennai">Chennai</option>
+                                    {% for s in sources %}
+                                    <option value="{{ s }}">{{ s }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
@@ -68,11 +58,9 @@
                                 <label for="destination">🌆 目的地:</label>
                                 <select class="form-control" id="destination" name="destination" required>
                                     <option value="">选择目的地</option>
-                                    <option value="Cochin">Cochin</option>
-                                    <option value="Delhi">Delhi</option>
-                                    <option value="New Delhi">New Delhi</option>
-                                    <option value="Hyderabad">Hyderabad</option>
-                                    <option value="Kolkata">Kolkata</option>
+                                    {% for d in destinations %}
+                                    <option value="{{ d }}">{{ d }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
@@ -87,19 +75,17 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="total_stops">🧳 经停次数:</label>
-                                <select class="form-control" id="total_stops" name="total_stops" required>
-                                    <option value="">选择经停次数</option>
-                                    <option value="0">直飞</option>
-                                    <option value="1">1次经停</option>
-                                    <option value="2">2次经停</option>
-                                    <option value="3">3次经停</option>
-                                    <option value="4">4次及以上经停</option>
+                                <label for="aircraft_model">✈️ 客机机型:</label>
+                                <select class="form-control" id="aircraft_model" name="aircraft_model" required>
+                                    <option value="">选择客机类型</option>
+                                    {% for m in aircraft_models %}
+                                    <option value="{{ m }}">{{ m }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label for="price">💰 价格 (卢比):</label>
+                                <label for="price">💰 价格 (¥):</label>
                                 <input type="number" class="form-control" id="price" name="price" step="0.01" placeholder="可选">
                             </div>
                             
